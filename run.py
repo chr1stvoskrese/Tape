@@ -24,9 +24,14 @@ DERIVED_DATA = ROOT / ".build"
 APP_PATH = DERIVED_DATA / "Build" / "Products" / "Debug-iphonesimulator" / "Tape.app"
 
 
-def run(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+def run(*args: str, check: bool = True, capture_output: bool = False) -> subprocess.CompletedProcess[str]:
     print("$", " ".join(args))
-    return subprocess.run(args, check=check, text=True)
+    return subprocess.run(
+        args,
+        check=check,
+        text=True,
+        capture_output=capture_output,
+    )
 
 
 def command_exists(name: str) -> bool:
@@ -99,7 +104,6 @@ def boot_simulator(udid: str, name: str) -> None:
 
 
 def uninstall_previous(udid: str) -> None:
-    # A stale app bundle can survive between builds and confuse installd.
     result = subprocess.run(
         ["xcrun", "simctl", "uninstall", udid, BUNDLE_ID],
         text=True,
@@ -163,9 +167,17 @@ def main() -> int:
 
     run("xcrun", "simctl", "install", udid, str(APP_PATH))
     time.sleep(0.5)
-    launch = run("xcrun", "simctl", "launch", udid, BUNDLE_ID)
+    launch = run(
+        "xcrun",
+        "simctl",
+        "launch",
+        udid,
+        BUNDLE_ID,
+        capture_output=True,
+    )
 
-    print(f"\nLaunch result: {launch.stdout.strip() or 'ok'}")
+    launch_output = (launch.stdout or launch.stderr or "").strip()
+    print(f"\nLaunch result: {launch_output or 'ok'}")
     print("Tape is running in Simulator.")
     return 0
 
