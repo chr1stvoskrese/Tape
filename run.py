@@ -42,7 +42,6 @@ def choose_simulator() -> tuple[str, str]:
     )
     payload = json.loads(result.stdout)
 
-    # Prefer a small/basic iPhone, but accept whatever is installed.
     preferred = {
         "iPhone SE (3rd generation)": 0,
         "iPhone 13 mini": 1,
@@ -85,8 +84,6 @@ def boot_simulator(udid: str, name: str) -> None:
         try:
             run("xcrun", "simctl", "boot", udid)
         except subprocess.CalledProcessError:
-            # Another process (often Simulator itself) may have booted it
-            # between the state check and the boot command.
             state = subprocess.run(
                 ["xcrun", "simctl", "list", "devices", "booted"],
                 check=True,
@@ -95,10 +92,21 @@ def boot_simulator(udid: str, name: str) -> None:
             ).stdout
             if udid not in state:
                 raise
-        time.sleep(2)
 
+    run("xcrun", "simctl", "bootstatus", udid, "-b")
     run("open", "-a", "Simulator")
     print(f"Simulator: {name}")
+
+
+def uninstall_previous(udid: str) -> None:
+    # A stale app bundle can survive between builds and confuse installd.
+    result = subprocess.run(
+        ["xcrun", "simctl", "uninstall", udid, BUNDLE_ID],
+        text=True,
+        capture_output=True,
+    )
+    if result.returncode == 0:
+        print(f"Removed previous {BUNDLE_ID} installation.")
 
 
 def main() -> int:
@@ -124,8 +132,12 @@ def main() -> int:
 
     run("open", "-a", "Xcode", str(PROJECT))
     boot_simulator(udid, name)
+    uninstall_previous(udid)
 
+    if DERIVED_DATA.exists():
+        shutil.rmtree(DERIVED_DATA)
     DERIVED_DATA.mkdir(parents=True, exist_ok=True)
+
     run(
         "xcodebuild",
         "-project",
@@ -138,6 +150,8 @@ def main() -> int:
         "iphonesimulator",
         "-destination",
         f"platform=iOS Simulator,id={udid}",
+        "-destination-timeout",
+        "60",
         "-derivedDataPath",
         str(DERIVED_DATA),
         "build",
@@ -148,9 +162,11 @@ def main() -> int:
         return 1
 
     run("xcrun", "simctl", "install", udid, str(APP_PATH))
-    run("xcrun", "simctl", "launch", udid, BUNDLE_ID)
+    time.sleep(0.5)
+    launch = run("xcrun", "simctl", "launch", udid, BUNDLE_ID)
 
-    print("\nTape is running in Simulator.")
+    print(f"\nLaunch result: {launch.stdout.strip() or 'ok'}")
+    print("Tape is running in Simulator.")
     return 0
 
 
