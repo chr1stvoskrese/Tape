@@ -40,11 +40,10 @@ enum ReferenceArtwork {
             }
 
             UIColor(white: 0.9, alpha: 0.72).setFill()
-            let playRect = CGRect(x: 891, y: 756, width: 20, height: 32)
             let playPath = UIBezierPath()
-            playPath.move(to: CGPoint(x: playRect.minX, y: playRect.minY))
-            playPath.addLine(to: CGPoint(x: playRect.maxX, y: playRect.midY))
-            playPath.addLine(to: CGPoint(x: playRect.minX, y: playRect.maxY))
+            playPath.move(to: CGPoint(x: 891, y: 756))
+            playPath.addLine(to: CGPoint(x: 911, y: 772))
+            playPath.addLine(to: CGPoint(x: 891, y: 788))
             playPath.close()
             playPath.fill()
         }
@@ -70,19 +69,22 @@ enum ReferenceArtwork {
         outer.stroke()
 
         UIColor(white: 1, alpha: 0.10).setFill()
-        let spokeWidth = radius * 0.05
-        let spokeHeight = radius * 0.34
-        let spokeX = center.x - spokeWidth / 2
-        let spokeY = center.y - radius * 0.47
+        let hole = radius * 0.065
+        let offset = radius * 0.36
+        let holePositions = [
+            CGPoint(x: center.x, y: center.y - offset),
+            CGPoint(x: center.x + offset, y: center.y),
+            CGPoint(x: center.x, y: center.y + offset),
+            CGPoint(x: center.x - offset, y: center.y)
+        ]
 
-        for index in 0..<5 {
-            let spoke = UIBezierPath(
-                roundedRect: CGRect(x: spokeX, y: spokeY, width: spokeWidth, height: spokeHeight),
-                cornerRadius: spokeWidth / 2
-            )
-            spoke.apply(CGAffineTransform(rotationAngle: CGFloat(index) * 0.4))
-            spoke.apply(CGAffineTransform(translationX: center.x - center.x, y: 0))
-            spoke.fill()
+        for point in holePositions {
+            UIBezierPath(ovalIn: CGRect(
+                x: point.x - hole,
+                y: point.y - hole,
+                width: hole * 2,
+                height: hole * 2
+            )).fill()
         }
 
         UIColor(red: 0.03, green: 0.03, blue: 0.03, alpha: 1).setFill()
