@@ -1,0 +1,56 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+/* Begin PBXBuildFile section */
+		A00000010000000000000001 /* TapeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000110000000000000001 /* TapeApp.swift */; };
+		A00000010000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000110000000000000002 /* ContentView.swift */; };
+		A00000010000000000000003 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000110000000000000003 /* DesignSystem.swift */; };
+		A00000010000000000000004 /* ReelAssemblyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000110000000000000004 /* ReelAssemblyView.swift */; };
+		A00000010000000000000005 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00000130000000000000001 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+/* Begin PBXFileReference section */
+		A00000100000000000000001 /* Tape.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tape.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A00000110000000000000001 /* TapeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TapeApp.swift; sourceTree = "<group>"; };
+		A00000110000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		A00000110000000000000003 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
+		A00000110000000000000004 /* ReelAssemblyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReelAssemblyView.swift; sourceTree = "<group>"; };
+		A00000120000000000000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A00000130000000000000001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+/* Begin PBXFrameworksBuildPhase section */
+		A00000210000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXFrameworksBuildPhase section */
+/* Begin PBXGroup section */
+		A00000300000000000000001 = {isa = PBXGroup; children = (A00000300000000000000002 /* Tape */, A00000300000000000000003 /* Products */, ); sourceTree = "<group>"; };
+		A00000300000000000000002 /* Tape */ = {isa = PBXGroup; children = (A00000110000000000000001 /* TapeApp.swift */, A00000110000000000000002 /* ContentView.swift */, A00000110000000000000003 /* DesignSystem.swift */, A00000110000000000000004 /* ReelAssemblyView.swift */, A00000120000000000000001 /* Info.plist */, A00000130000000000000001 /* Assets.xcassets */, ); path = Tape; sourceTree = "<group>"; };
+		A00000300000000000000003 /* Products */ = {isa = PBXGroup; children = (A00000100000000000000001 /* Tape.app */, ); name = Products; sourceTree = "<group>"; };
+/* End PBXGroup section */
+/* Begin PBXNativeTarget section */
+		A00000400000000000000001 /* Tape */ = {isa = PBXNativeTarget; buildConfigurationList = A00000600000000000000002 /* Build configuration list for PBXNativeTarget "Tape" */; buildPhases = (A00000210000000000000001 /* Frameworks */, A00000410000000000000001 /* Sources */, A00000410000000000000002 /* Resources */, ); buildRules = (); dependencies = (); name = Tape; productName = Tape; productReference = A00000100000000000000001 /* Tape.app */; productType = "com.apple.product-type.application"; };
+/* End PBXNativeTarget section */
+/* Begin PBXProject section */
+		A00000500000000000000001 /* Project object */ = {isa = PBXProject; attributes = {BuildIndependentTargetsInParallel = 1; LastSwiftUpdateCheck = 1600; LastUpgradeCheck = 1600; }; buildConfigurationList = A00000600000000000000001 /* Build configuration list for PBXProject "Tape" */; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en, Base, ); mainGroup = A00000300000000000000001; productRefGroup = A00000300000000000000003 /* Products */; projectDirPath = ""; projectRoot = ""; targets = (A00000400000000000000001 /* Tape */, ); };
+/* End PBXProject section */
+/* Begin PBXResourcesBuildPhase section */
+		A00000410000000000000002 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A00000010000000000000005 /* Assets.xcassets in Resources */, ); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXResourcesBuildPhase section */
+/* Begin PBXSourcesBuildPhase section */
+		A00000410000000000000001 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A00000010000000000000001 /* TapeApp.swift in Sources */, A00000010000000000000002 /* ContentView.swift in Sources */, A00000010000000000000003 /* DesignSystem.swift in Sources */, A00000010000000000000004 /* ReelAssemblyView.swift in Sources */, ); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXSourcesBuildPhase section */
+/* Begin XCBuildConfiguration section */
+		A00000700000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; SWIFT_VERSION = 5.0; }; name = Debug; };
+		A00000700000000000000002 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; SWIFT_VERSION = 5.0; }; name = Release; };
+		A00000700000000000000003 /* Debug target */ = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = Tape/Info.plist; IPHONEOS_DEPLOYMENT_TARGET = 17.0; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", ); PRODUCT_BUNDLE_IDENTIFIER = "chr1stvoskrese.Tape"; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; }; name = Debug; };
+		A00000700000000000000004 /* Release target */ = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = Tape/Info.plist; IPHONEOS_DEPLOYMENT_TARGET = 17.0; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", ); PRODUCT_BUNDLE_IDENTIFIER = "chr1stvoskrese.Tape"; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; }; name = Release; };
+/* End XCBuildConfiguration section */
+/* Begin XCConfigurationList section */
+		A00000600000000000000001 /* Build configuration list for PBXProject "Tape" */ = {isa = XCConfigurationList; buildConfigurations = (A00000700000000000000001 /* Debug */, A00000700000000000000002 /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A00000600000000000000002 /* Build configuration list for PBXNativeTarget "Tape" */ = {isa = XCConfigurationList; buildConfigurations = (A00000700000000000000003 /* Debug target */, A00000700000000000000004 /* Release target */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+	};
+	rootObject = A00000500000000000000001 /* Project object */;
+}
