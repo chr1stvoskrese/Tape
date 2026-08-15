@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct PhysicalPlayerView: View {
     @State private var isPlaying = true
@@ -6,25 +7,24 @@ struct PhysicalPlayerView: View {
     @State private var selectedPreset = 0
     @State private var pressedControl: Control?
 
-    private let canvas = CGSize(width: 1200, height: 720)
-
+    private let canvas = CGSize(width: 1280, height: 800)
     private let paper = Color(red: 0.965, green: 0.963, blue: 0.950)
-    private let surface = Color(red: 0.935, green: 0.930, blue: 0.912)
+    private let surface = Color(red: 0.945, green: 0.940, blue: 0.925)
+    private let white = Color(red: 0.985, green: 0.982, blue: 0.973)
     private let graphite = Color(red: 0.105, green: 0.105, blue: 0.100)
-    private let line = Color(red: 0.16, green: 0.16, blue: 0.15)
-    private let muted = Color(red: 0.50, green: 0.49, blue: 0.45)
+    private let line = Color(red: 0.18, green: 0.18, blue: 0.17)
+    private let muted = Color(red: 0.48, green: 0.47, blue: 0.44)
     private let accent = Color(red: 0.91, green: 0.40, blue: 0.06)
 
     var body: some View {
         GeometryReader { proxy in
             let scale = min(
-                proxy.size.width * 0.94 / canvas.width,
-                proxy.size.height * 0.90 / canvas.height
+                proxy.size.width * 0.985 / canvas.width,
+                proxy.size.height * 0.94 / canvas.height
             )
 
             ZStack {
                 paper.ignoresSafeArea()
-
                 player
                     .scaleEffect(scale)
                     .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
@@ -37,11 +37,11 @@ struct PhysicalPlayerView: View {
     private var player: some View {
         ZStack {
             cassetteBody
-            topIdentity
+            header
             reelStage
-            connectionLines
-            controlRail
-            bottomInfo
+            centerSpine
+            controls
+            telemetry
         }
         .frame(width: canvas.width, height: canvas.height)
         .accessibilityElement(children: .contain)
@@ -49,185 +49,191 @@ struct PhysicalPlayerView: View {
     }
 
     private var cassetteBody: some View {
-        RoundedRectangle(cornerRadius: 42, style: .continuous)
+        RoundedRectangle(cornerRadius: 48, style: .continuous)
             .fill(surface)
             .overlay {
-                RoundedRectangle(cornerRadius: 42, style: .continuous)
-                    .stroke(line, lineWidth: 2)
+                RoundedRectangle(cornerRadius: 48, style: .continuous)
+                    .stroke(line.opacity(0.82), lineWidth: 2)
             }
-            .overlay(alignment: .topLeading) {
-                HStack(spacing: 8) {
-                    Rectangle().fill(accent).frame(width: 34, height: 2)
-                    Text("TAPE / 01")
-                        .font(.system(size: 10, weight: .semibold, design: .monospaced))
-                        .tracking(2)
-                        .foregroundStyle(muted)
-                }
-                .padding(.leading, 34)
-                .padding(.top, 28)
+            .overlay {
+                RoundedRectangle(cornerRadius: 44, style: .continuous)
+                    .stroke(Color.white.opacity(0.8), lineWidth: 1)
+                    .padding(10)
             }
-            .shadow(color: .black.opacity(0.08), radius: 14, y: 8)
+            .shadow(color: .black.opacity(0.07), radius: 18, y: 10)
     }
 
-    private var topIdentity: some View {
-        HStack(alignment: .center, spacing: 14) {
-            Text(isPlaying ? "PLAY" : "PAUSE")
-                .font(.system(size: 11, weight: .bold, design: .monospaced))
-                .tracking(2.2)
-                .foregroundStyle(graphite)
-
-            Circle()
-                .fill(isPlaying ? accent : muted.opacity(0.35))
-                .frame(width: 7, height: 7)
-
-            Rectangle()
-                .fill(line.opacity(0.18))
-                .frame(width: 1, height: 28)
-
-            Text("HI-FI / ANALOG TRANSPORT")
-                .font(.system(size: 10, weight: .medium, design: .monospaced))
-                .tracking(1.7)
-                .foregroundStyle(muted)
+    private var header: some View {
+        HStack(alignment: .center) {
+            HStack(spacing: 10) {
+                Capsule()
+                    .fill(accent)
+                    .frame(width: 36, height: 3)
+                Text("TAPE")
+                    .font(.system(size: 18, weight: .black, design: .rounded))
+                    .tracking(4)
+                    .foregroundStyle(graphite)
+                Text("/ 01")
+                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                    .foregroundStyle(muted)
+            }
 
             Spacer()
 
-            Text("86.4")
-                .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                .foregroundStyle(graphite)
-            Text("kHz")
-                .font(.system(size: 9, weight: .medium, design: .monospaced))
-                .foregroundStyle(muted)
+            HStack(spacing: 10) {
+                Circle()
+                    .fill(isPlaying ? accent : muted.opacity(0.28))
+                    .frame(width: 8, height: 8)
+                Text(isPlaying ? "PLAYING" : "PAUSED")
+                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .tracking(1.8)
+                    .foregroundStyle(graphite)
+            }
         }
-        .frame(width: 1088)
-        .position(x: 600, y: 82)
+        .frame(width: 1140)
+        .position(x: 640, y: 76)
     }
 
     private var reelStage: some View {
-        HStack(spacing: 138) {
-            ReelModule(tint: graphite, isPlaying: isPlaying)
+        HStack(spacing: 150) {
+            ReelModule(tint: graphite, accent: accent, isPlaying: isPlaying)
                 .onTapGesture { togglePlayback() }
 
-            ReelModule(tint: accent, isPlaying: isPlaying)
+            ReelModule(tint: accent, accent: accent, isPlaying: isPlaying)
                 .onTapGesture { togglePlayback() }
         }
-        .frame(width: 850, height: 430)
-        .position(x: 600, y: 342)
+        .frame(width: 1030, height: 440)
+        .position(x: 640, y: 342)
     }
 
-    private var connectionLines: some View {
+    private var centerSpine: some View {
         ZStack {
             Capsule()
-                .fill(line.opacity(0.65))
-                .frame(width: 280, height: 2)
-                .position(x: 600, y: 342)
+                .fill(line.opacity(0.62))
+                .frame(width: 220, height: 1.5)
 
             Circle()
-                .stroke(line.opacity(0.65), lineWidth: 2)
-                .frame(width: 12, height: 12)
-                .position(x: 600, y: 342)
-
-            Path { path in
-                path.move(to: CGPoint(x: 286, y: 190))
-                path.addLine(to: CGPoint(x: 286, y: 493))
-            }
-            .stroke(line.opacity(0.16), style: StrokeStyle(lineWidth: 1, dash: [5, 8]))
-
-            Path { path in
-                path.move(to: CGPoint(x: 914, y: 190))
-                path.addLine(to: CGPoint(x: 914, y: 493))
-            }
-            .stroke(line.opacity(0.16), style: StrokeStyle(lineWidth: 1, dash: [5, 8]))
+                .fill(surface)
+                .frame(width: 34, height: 34)
+                .overlay {
+                    Circle()
+                        .stroke(line.opacity(0.55), lineWidth: 1.5)
+                }
+                .overlay {
+                    Circle()
+                        .fill(accent)
+                        .frame(width: 7, height: 7)
+                }
         }
+        .position(x: 640, y: 342)
         .allowsHitTesting(false)
     }
 
-    private var controlRail: some View {
-        HStack(spacing: 10) {
-            control(.previous, title: "PREV", symbol: "backward.end")
-            control(.rewind, title: "REW", symbol: "backward")
-            control(.playPause, title: isPlaying ? "PAUSE" : "PLAY", symbol: isPlaying ? "pause" : "play")
-            control(.forward, title: "FWD", symbol: "forward")
-            control(.volumeDown, title: "VOL−", symbol: "minus")
-            control(.volumeUp, title: "VOL+", symbol: "plus")
-            control(.preset, title: "PRESET", symbol: "slider.horizontal.3")
-            control(.power, title: "POWER", symbol: "power")
+    private var controls: some View {
+        HStack(spacing: 14) {
+            control(.previous, symbol: "backward.end.fill", title: "PREV")
+            control(.rewind, symbol: "backward.fill", title: "REW")
+            control(.playPause, symbol: isPlaying ? "pause.fill" : "play.fill", title: isPlaying ? "PAUSE" : "PLAY", emphasis: true)
+            control(.forward, symbol: "forward.fill", title: "FWD")
+            control(.volumeDown, symbol: "minus", title: "VOL −")
+            control(.volumeUp, symbol: "plus", title: "VOL +")
+            control(.preset, symbol: "slider.horizontal.3", title: "PRESET")
+            control(.power, symbol: "power", title: "POWER", accentText: true)
         }
-        .frame(height: 72)
-        .position(x: 600, y: 565)
+        .frame(height: 84)
+        .position(x: 640, y: 594)
     }
 
-    private func control(_ control: Control, title: String, symbol: String) -> some View {
+    private func control(
+        _ control: Control,
+        symbol: String,
+        title: String,
+        emphasis: Bool = false,
+        accentText: Bool = false
+    ) -> some View {
         Button {
             trigger(control)
         } label: {
-            VStack(spacing: 7) {
+            VStack(spacing: 8) {
                 Image(systemName: symbol)
-                    .font(.system(size: 15, weight: .medium))
-                    .frame(height: 17)
+                    .font(.system(size: emphasis ? 20 : 15, weight: emphasis ? .semibold : .medium))
+                    .frame(height: 20)
 
                 Text(title)
-                    .font(.system(size: 7.5, weight: .semibold, design: .monospaced))
-                    .tracking(0.7)
+                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+                    .tracking(0.9)
             }
-            .foregroundStyle(control == .power ? accent : graphite)
-            .frame(width: 76, height: 64)
-            .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(paper.opacity(0.78))
-            )
+            .foregroundStyle(accentText ? accent : graphite)
+            .frame(width: emphasis ? 92 : 84, height: emphasis ? 74 : 70)
+            .background {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(emphasis ? white : paper.opacity(0.74))
+            }
             .overlay {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(line.opacity(control == .power ? 0.35 : 0.18), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(emphasis ? line.opacity(0.28) : line.opacity(0.14), lineWidth: 1)
             }
+            .shadow(color: emphasis ? .black.opacity(0.06) : .clear, radius: 8, y: 4)
             .scaleEffect(pressedControl == control ? 0.94 : 1)
         }
         .buttonStyle(.plain)
     }
 
-    private var bottomInfo: some View {
+    private var telemetry: some View {
         HStack(alignment: .center, spacing: 28) {
-            Text("MEMORY")
-                .font(.system(size: 8, weight: .bold, design: .monospaced))
-                .tracking(1.5)
-                .foregroundStyle(muted)
+            HStack(spacing: 14) {
+                Text("MEM")
+                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+                    .tracking(1.4)
+                    .foregroundStyle(muted)
 
-            HStack(spacing: 5) {
-                ForEach(0..<4, id: \.self) { index in
-                    Capsule()
-                        .fill(index == selectedPreset ? accent : line.opacity(0.24))
-                        .frame(width: 22, height: 2)
+                HStack(spacing: 6) {
+                    ForEach(0..<4, id: \.self) { index in
+                        Capsule()
+                            .fill(index == selectedPreset ? accent : line.opacity(0.18))
+                            .frame(width: 24, height: 2.5)
+                    }
                 }
+
+                Text("P0\(selectedPreset + 1)")
+                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                    .foregroundStyle(graphite)
             }
 
-            Text("P0\(selectedPreset + 1)")
-                .font(.system(size: 9, weight: .semibold, design: .monospaced))
-                .foregroundStyle(graphite)
+            Rectangle()
+                .fill(line.opacity(0.12))
+                .frame(width: 1, height: 24)
 
-            Spacer()
-
-            HStack(spacing: 8) {
-                Text("VOLUME")
+            HStack(spacing: 10) {
+                Text("OUT")
                     .font(.system(size: 8, weight: .bold, design: .monospaced))
-                    .tracking(1.5)
+                    .tracking(1.4)
                     .foregroundStyle(muted)
 
                 Capsule()
-                    .fill(line.opacity(0.18))
-                    .frame(width: 110, height: 2)
+                    .fill(line.opacity(0.14))
+                    .frame(width: 160, height: 3)
                     .overlay(alignment: .leading) {
                         Capsule()
                             .fill(accent)
-                            .frame(width: 110 * volume, height: 2)
+                            .frame(width: 160 * volume, height: 3)
                     }
 
-                Text("\(Int(volume * 100))")
-                    .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                Text(String(format: "%02d", Int(volume * 100)))
+                    .font(.system(size: 9, weight: .bold, design: .monospaced))
                     .foregroundStyle(graphite)
-                    .frame(width: 28, alignment: .trailing)
+                    .frame(width: 22, alignment: .trailing)
             }
+
+            Spacer(minLength: 0)
+
+            Text("ANALOG / TRANSPORT")
+                .font(.system(size: 8, weight: .medium, design: .monospaced))
+                .tracking(1.6)
+                .foregroundStyle(muted)
         }
-        .frame(width: 1088)
-        .position(x: 600, y: 658)
+        .frame(width: 1140)
+        .position(x: 640, y: 700)
     }
 
     private func togglePlayback() {
@@ -237,7 +243,6 @@ struct PhysicalPlayerView: View {
 
     private func trigger(_ control: Control) {
         pressedControl = control
-
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) {
             withAnimation(.easeOut(duration: 0.12)) {
                 pressedControl = nil
@@ -265,22 +270,15 @@ struct PhysicalPlayerView: View {
     }
 
     private enum Control: Hashable {
-        case previous
-        case rewind
-        case playPause
-        case forward
-        case volumeDown
-        case volumeUp
-        case preset
-        case power
+        case previous, rewind, playPause, forward
+        case volumeDown, volumeUp, preset, power
     }
 }
 
 private struct ReelModule: View {
     let tint: Color
+    let accent: Color
     let isPlaying: Bool
-
-    private let centerPaper = Color(red: 0.965, green: 0.963, blue: 0.950)
 
     var body: some View {
         TimelineView(.animation(paused: !isPlaying)) { context in
@@ -289,46 +287,56 @@ private struct ReelModule: View {
 
             ZStack {
                 Circle()
-                    .fill(Color.clear)
-                    .frame(width: 330, height: 330)
+                    .fill(Color.white.opacity(0.34))
+                    .frame(width: 386, height: 386)
                     .overlay {
                         Circle()
-                            .stroke(Color.black.opacity(0.16), lineWidth: 1)
+                            .stroke(Color.black.opacity(0.12), lineWidth: 1)
                     }
 
                 Circle()
-                    .fill(tint.opacity(0.08))
+                    .fill(tint.opacity(0.035))
+                    .frame(width: 352, height: 352)
+
+                Circle()
+                    .stroke(tint.opacity(0.24), lineWidth: 1.5)
                     .frame(width: 300, height: 300)
 
                 Circle()
-                    .stroke(tint.opacity(0.28), lineWidth: 1)
-                    .frame(width: 258, height: 258)
+                    .stroke(tint.opacity(0.10), lineWidth: 1)
+                    .frame(width: 244, height: 244)
 
                 ForEach(0..<6, id: \.self) { index in
                     Capsule()
                         .fill(tint.opacity(0.70))
-                        .frame(width: 7, height: 78)
-                        .offset(y: -74)
+                        .frame(width: 8, height: 84)
+                        .offset(y: -76)
                         .rotationEffect(.degrees(Double(index) * 60))
                 }
 
                 Circle()
-                    .fill(tint.opacity(0.05))
-                    .frame(width: 128, height: 128)
+                    .fill(tint.opacity(0.035))
+                    .frame(width: 132, height: 132)
                     .overlay {
                         Circle()
-                            .stroke(tint.opacity(0.45), lineWidth: 1.5)
+                            .stroke(tint.opacity(0.32), lineWidth: 1.5)
                     }
 
                 Circle()
                     .fill(tint)
-                    .frame(width: 34, height: 34)
+                    .frame(width: 38, height: 38)
 
                 Circle()
-                    .fill(centerPaper)
-                    .frame(width: 10, height: 10)
+                    .fill(Color.white)
+                    .frame(width: 12, height: 12)
+
+                // Minimal tone-arm marker / sensor line.
+                Capsule()
+                    .fill(accent.opacity(0.55))
+                    .frame(width: 2, height: 48)
+                    .offset(y: -174)
             }
-            .frame(width: 330, height: 330)
+            .frame(width: 386, height: 386)
             .rotationEffect(.degrees(rotation))
         }
     }
