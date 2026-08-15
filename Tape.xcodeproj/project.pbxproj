@@ -41,7 +41,7 @@
 		A00000410000000000000002 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A00000010000000000000005 /* Assets.xcassets in Resources */, ); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 /* Begin PBXSourcesBuildPhase section */
-		A00000410000000000000001 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A00000010000000000000001 /* TapeApp.swift in Sources */, A00000010000000000000002 /* ContentView.swift in Sources */, A00000010000000000000003 /* DesignSystem.swift in Sources */, A00000010000000000000004 /* ReelAssemblyView.swift in Sources */, A00000010000000000000006 /* PhysicalPlayerView.swift in Sources */, ); runOnlyForDependencyAnalysis = 0; runOnlyForDeploymentPostprocessing = 0; };
+		A00000410000000000000001 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A00000010000000000000001 /* TapeApp.swift in Sources */, A00000010000000000000002 /* ContentView.swift in Sources */, A00000010000000000000003 /* DesignSystem.swift in Sources */, A00000010000000000000004 /* ReelAssemblyView.swift in Sources */, A00000010000000000000006 /* PhysicalPlayerView.swift in Sources */, ); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 /* Begin XCBuildConfiguration section */
 		A00000700000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; }; name = Debug; };
