@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct PhysicalPlayerView: View {
     @State private var isPlaying = false
@@ -17,18 +18,23 @@ struct PhysicalPlayerView: View {
             ZStack {
                 Color.white.ignoresSafeArea()
 
-                Image("PlayerArtwork")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: size.width, height: size.height)
-                    .overlay {
-                        PlayerControlsOverlay(
-                            isPlaying: $isPlaying,
-                            volume: $volume,
-                            selectedPreset: $selectedPreset,
-                            pressedControl: $pressedControl
-                        )
-                    }
+                if let artwork = UIImage(named: "player-artwork.jpg") {
+                    Image(uiImage: artwork)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: size.width, height: size.height)
+                        .overlay {
+                            PlayerControlsOverlay(
+                                isPlaying: $isPlaying,
+                                volume: $volume,
+                                selectedPreset: $selectedPreset,
+                                pressedControl: $pressedControl
+                            )
+                        }
+                } else {
+                    Color.white
+                        .frame(width: size.width, height: size.height)
+                }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -116,16 +122,8 @@ private struct PlayerControlsOverlay: View {
 }
 
 private enum Control: Hashable {
-    case previous
-    case rewind
-    case playPause
-    case fastForward
-    case next
-    case volumeDown
-    case volumeUp
-    case eqPreset
-    case memoryLibrary
-    case power
+    case previous, rewind, playPause, fastForward, next
+    case volumeDown, volumeUp, eqPreset, memoryLibrary, power
 
     var accessibilityLabel: String {
         switch self {
