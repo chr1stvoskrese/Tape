@@ -21,19 +21,35 @@ struct PhysicalPlayerView: View {
     private func player(in screenSize: CGSize) -> some View {
         let finalHeight = min(screenSize.height * 0.90, 620)
         let finalWidth = finalHeight * 0.75
-        let sourceWidth = finalHeight
-        let sourceHeight = finalWidth
+        let width = finalHeight
+        let height = finalWidth
 
         return ZStack {
-            Image(uiImage: ReferenceArtwork.image)
-                .resizable()
-                .scaledToFill()
-                .frame(width: sourceWidth, height: sourceHeight)
+            RoundedRectangle(cornerRadius: 38, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.17, green: 0.17, blue: 0.16),
+                            Color(red: 0.06, green: 0.058, blue: 0.054)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .overlay {
+                    RoundedRectangle(cornerRadius: 38, style: .continuous)
+                        .stroke(Color.white.opacity(0.10), lineWidth: 2)
+                }
 
-            animatedReelCores(sourceWidth: sourceWidth, sourceHeight: sourceHeight)
-            physicalControls(sourceWidth: sourceWidth, sourceHeight: sourceHeight)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(Color(red: 0.025, green: 0.027, blue: 0.025))
+                .frame(width: width * 0.70, height: height * 0.56)
+                .offset(y: -height * 0.02)
+
+            reelAssembly(width: width, height: height)
+            physicalControls(width: width, height: height)
         }
-        .frame(width: sourceWidth, height: sourceHeight)
+        .frame(width: width, height: height)
         .rotationEffect(.degrees(90))
         .frame(width: finalWidth, height: finalHeight)
         .shadow(color: .black.opacity(0.44), radius: 28, y: 18)
@@ -41,48 +57,63 @@ struct PhysicalPlayerView: View {
         .accessibilityLabel("Tape music player")
     }
 
-    private func animatedReelCores(sourceWidth: CGFloat, sourceHeight: CGFloat) -> some View {
-        let leftCenter = CGPoint(x: sourceWidth * 417 / 640, y: sourceHeight * 438 / 480)
-        let rightCenter = CGPoint(x: sourceWidth * 863 / 640, y: sourceHeight * 438 / 480)
-        let coreSize = sourceWidth * 118 / 640
+    private func reelAssembly(width: CGFloat, height: CGFloat) -> some View {
+        let leftCenter = CGPoint(x: width * 417 / 640, y: height * 438 / 480)
+        let rightCenter = CGPoint(x: width * 863 / 640, y: height * 438 / 480)
+        let reelSize = width * 318 / 640
 
         return ZStack {
             Circle()
                 .fill(Color(red: 0.14, green: 0.14, blue: 0.14))
-                .frame(width: sourceWidth * 318 / 640, height: sourceWidth * 318 / 640)
+                .frame(width: reelSize, height: reelSize)
                 .position(leftCenter)
 
             Circle()
                 .fill(Color(red: 1.0, green: 0.45, blue: 0.02))
-                .frame(width: sourceWidth * 318 / 640, height: sourceWidth * 318 / 640)
+                .frame(width: reelSize, height: reelSize)
                 .position(rightCenter)
 
-            reelCore(crop: CGRect(x: 352, y: 373, width: 118, height: 118), size: coreSize)
+            reelCore(size: width * 118 / 640)
                 .position(leftCenter)
-                .rotationEffect(.degrees(reelPhase), anchor: .center)
+                .rotationEffect(.degrees(reelPhase))
 
-            reelCore(crop: CGRect(x: 804, y: 373, width: 118, height: 118), size: coreSize)
+            reelCore(size: width * 118 / 640)
                 .position(rightCenter)
-                .rotationEffect(.degrees(-reelPhase * 1.22), anchor: .center)
+                .rotationEffect(.degrees(-reelPhase * 1.22))
         }
         .allowsHitTesting(false)
-        .opacity(isPlaying ? 1 : 0.98)
     }
 
-    private func reelCore(crop: CGRect, size: CGFloat) -> some View {
-        let cropped = ReferenceArtwork.image.cgImage.flatMap { $0.cropping(to: crop) }.map(UIImage.init)
-        return Group {
-            if let cropped {
-                Image(uiImage: cropped)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: size, height: size)
-                    .clipShape(Circle())
+    private func reelCore(size: CGFloat) -> some View {
+        ZStack {
+            Circle()
+                .fill(Color(red: 0.035, green: 0.034, blue: 0.032))
+                .overlay {
+                    Circle()
+                        .stroke(Color.white.opacity(0.12), lineWidth: max(1, size * 0.02))
+                }
+
+            ForEach(0..<5, id: \.self) { index in
+                Capsule(style: .circular)
+                    .fill(Color.white.opacity(0.10))
+                    .frame(width: max(2, size * 0.026), height: size * 0.23)
+                    .offset(y: -size * 0.14)
+                    .rotationEffect(.degrees(Double(index) * 72))
             }
+
+            Circle()
+                .fill(Color(red: 0.025, green: 0.025, blue: 0.023))
+                .frame(width: size * 0.24, height: size * 0.24)
+
+            Circle()
+                .fill(Color(red: 0.89, green: 0.67, blue: 0.31).opacity(0.9))
+                .frame(width: size * 0.05, height: size * 0.05)
         }
+        .frame(width: size, height: size)
+        .clipShape(Circle())
     }
 
-    private func physicalControls(sourceWidth: CGFloat, sourceHeight: CGFloat) -> some View {
+    private func physicalControls(width: CGFloat, height: CGFloat) -> some View {
         GeometryReader { proxy in
             ZStack {
                 controlButton(.previous, x: 267 / 640, y: 222 / 480, width: 72 / 640, height: 58 / 480, in: proxy.size)
@@ -93,13 +124,14 @@ struct PhysicalPlayerView: View {
                 controlButton(.playPause, x: 901 / 640, y: 752 / 480, width: 82 / 640, height: 74 / 480, in: proxy.size)
 
                 Rectangle()
-                    .fill(.clear)
+                    .fill(Color.clear)
                     .contentShape(Rectangle())
                     .gesture(
                         DragGesture(minimumDistance: 12)
                             .onEnded { value in
                                 let dx = value.translation.width
                                 let dy = value.translation.height
+
                                 if abs(dx) > abs(dy), abs(dx) > 28 {
                                     trigger(dx < 0 ? .next : .previous)
                                 } else if abs(dy) > 22 {
@@ -109,10 +141,9 @@ struct PhysicalPlayerView: View {
                             }
                     )
                     .accessibilityLabel("Player surface")
-                    .allowsHitTesting(false)
             }
         }
-        .frame(width: sourceWidth, height: sourceHeight)
+        .frame(width: width, height: height)
     }
 
     private func controlButton(
@@ -127,7 +158,7 @@ struct PhysicalPlayerView: View {
             trigger(control)
         } label: {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(.clear)
+                .fill(Color.white.opacity(0.001))
                 .overlay {
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
                         .fill(Color.black.opacity(pressedControl == control ? 0.10 : 0))
@@ -143,7 +174,9 @@ struct PhysicalPlayerView: View {
     private func trigger(_ control: Control) {
         pressedControl = control
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
-            withAnimation(.easeOut(duration: 0.12)) { pressedControl = nil }
+            withAnimation(.easeOut(duration: 0.12)) {
+                pressedControl = nil
+            }
         }
 
         switch control {
@@ -171,27 +204,41 @@ struct PhysicalPlayerView: View {
         }
     }
 
-    private enum HapticKind { case light, medium, rigid, selection }
+    private enum HapticKind {
+        case light
+        case medium
+        case rigid
+        case selection
+    }
 
     private func haptic(_ kind: HapticKind) {
         switch kind {
         case .light:
             let generator = UIImpactFeedbackGenerator(style: .light)
-            generator.prepare(); generator.impactOccurred()
+            generator.prepare()
+            generator.impactOccurred()
         case .medium:
             let generator = UIImpactFeedbackGenerator(style: .medium)
-            generator.prepare(); generator.impactOccurred()
+            generator.prepare()
+            generator.impactOccurred()
         case .rigid:
             let generator = UIImpactFeedbackGenerator(style: .rigid)
-            generator.prepare(); generator.impactOccurred()
+            generator.prepare()
+            generator.impactOccurred()
         case .selection:
             let generator = UISelectionFeedbackGenerator()
-            generator.prepare(); generator.selectionChanged()
+            generator.prepare()
+            generator.selectionChanged()
         }
     }
 
     private enum Control: Hashable {
-        case previous, next, plus, minus, eq, playPause
+        case previous
+        case next
+        case plus
+        case minus
+        case eq
+        case playPause
 
         var label: String {
             switch self {
@@ -206,6 +253,6 @@ struct PhysicalPlayerView: View {
     }
 }
 
-#Preview(traits: .landscapeLeft) {
+#Preview {
     PhysicalPlayerView()
 }
