@@ -4,70 +4,73 @@ import UIKit
 struct PhysicalPlayerView: View {
     @State private var isPlaying = false
     @State private var reelPhase: Double = 0
-    @State private var pressedControl: Control? = nil
+    @State private var pressedControl: Control?
     @State private var progress: CGFloat = 0.38
 
     var body: some View {
         GeometryReader { proxy in
             ZStack {
                 Color.black.ignoresSafeArea()
-                playerObject(in: proxy.size)
-                    .contentShape(Rectangle())
+                player(in: proxy.size)
             }
         }
         .preferredColorScheme(.dark)
         .statusBarHidden(true)
     }
 
-    private func playerObject(in size: CGSize) -> some View {
-        let height = min(size.height * 0.90, 620)
-        let width = height * 0.75
+    private func player(in screenSize: CGSize) -> some View {
+        let finalHeight = min(screenSize.height * 0.90, 620)
+        let finalWidth = finalHeight * 0.75
+        let sourceWidth = finalHeight
+        let sourceHeight = finalWidth
 
         return ZStack {
             Image(uiImage: ReferenceArtwork2.image)
                 .resizable()
-                .scaledToFit()
-                .frame(width: width, height: height)
-                .rotationEffect(.degrees(90))
-                .shadow(color: .black.opacity(0.42), radius: 30, y: 18)
+                .scaledToFill()
+                .frame(width: sourceWidth, height: sourceHeight)
 
-            rotatingReelOverlays(width: width, height: height)
-            interactionSurface(width: width, height: height)
+            animatedReelCores(sourceWidth: sourceWidth, sourceHeight: sourceHeight)
+            physicalControls(sourceWidth: sourceWidth, sourceHeight: sourceHeight)
         }
-        .frame(width: width, height: height)
-        .animation(.easeInOut(duration: 0.35), value: isPlaying)
+        .frame(width: sourceWidth, height: sourceHeight)
+        .rotationEffect(.degrees(90))
+        .frame(width: finalWidth, height: finalHeight)
+        .shadow(color: .black.opacity(0.44), radius: 28, y: 18)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Tape music player")
     }
 
-    private func rotatingReelOverlays(width: CGFloat, height: CGFloat) -> some View {
-        GeometryReader { _ in
-            let discSize = min(width, height) * 0.27
-            let offsetX = height * 0.285
-            let offsetY = -width * 0.065
+    private func animatedReelCores(sourceWidth: CGFloat, sourceHeight: CGFloat) -> some View {
+        let leftCenter = CGPoint(x: sourceWidth * 417 / 640, y: sourceHeight * 438 / 480)
+        let rightCenter = CGPoint(x: sourceWidth * 863 / 640, y: sourceHeight * 438 / 480)
+        let coreSize = sourceWidth * 118 / 640
 
-            ZStack {
-                reelCrop(.left, size: discSize)
-                    .offset(x: offsetY, y: -offsetX)
-                    .rotationEffect(.degrees(reelPhase))
+        return ZStack {
+            Circle()
+                .fill(Color(red: 0.14, green: 0.14, blue: 0.14))
+                .frame(width: sourceWidth * 318 / 640, height: sourceWidth * 318 / 640)
+                .position(leftCenter)
 
-                reelCrop(.right, size: discSize)
-                    .offset(x: offsetY, y: offsetX)
-                    .rotationEffect(.degrees(-reelPhase * 1.22))
-            }
+            Circle()
+                .fill(Color(red: 1.0, green: 0.45, blue: 0.02))
+                .frame(width: sourceWidth * 318 / 640, height: sourceWidth * 318 / 640)
+                .position(rightCenter)
+
+            reelCore(crop: CGRect(x: 352, y: 373, width: 118, height: 118), size: coreSize)
+                .position(leftCenter)
+                .rotationEffect(.degrees(reelPhase), anchor: .center)
+
+            reelCore(crop: CGRect(x: 804, y: 373, width: 118, height: 118), size: coreSize)
+                .position(rightCenter)
+                .rotationEffect(.degrees(-reelPhase * 1.22), anchor: .center)
         }
-        .frame(width: width, height: height)
         .allowsHitTesting(false)
-        .opacity(isPlaying ? 1 : 0.96)
+        .opacity(isPlaying ? 1 : 0.98)
     }
 
-    private enum ReelSide { case left, right }
-
-    private func reelCrop(_ side: ReelSide, size: CGFloat) -> some View {
-        let source = side == .left
-            ? CGRect(x: 185, y: 205, width: 150, height: 150)
-            : CGRect(x: 530, y: 205, width: 150, height: 150)
-
-        let cropped = ReferenceArtwork2.image.cgImage.flatMap { $0.cropping(to: source) }.map(UIImage.init)
-
+    private func reelCore(crop: CGRect, size: CGFloat) -> some View {
+        let cropped = ReferenceArtwork2.image.cgImage.flatMap { $0.cropping(to: crop) }.map(UIImage.init)
         return Group {
             if let cropped {
                 Image(uiImage: cropped)
@@ -75,59 +78,71 @@ struct PhysicalPlayerView: View {
                     .scaledToFill()
                     .frame(width: size, height: size)
                     .clipShape(Circle())
-                    .shadow(color: .black.opacity(0.12), radius: 2, y: 1)
             }
         }
     }
 
-    private func interactionSurface(width: CGFloat, height: CGFloat) -> some View {
-        ZStack {
-            buttonZone(x: 0.22, y: 0.14, width: 0.12, height: 0.09, control: .previous)
-            buttonZone(x: 0.39, y: 0.14, width: 0.12, height: 0.09, control: .next)
-            buttonZone(x: 0.73, y: 0.14, width: 0.11, height: 0.09, control: .plus)
-            buttonZone(x: 0.84, y: 0.14, width: 0.11, height: 0.09, control: .minus)
-            buttonZone(x: 0.94, y: 0.14, width: 0.10, height: 0.09, control: .eq)
-            buttonZone(x: 0.70, y: 0.78, width: 0.14, height: 0.13, control: .playPause)
+    private func physicalControls(sourceWidth: CGFloat, sourceHeight: CGFloat) -> some View {
+        GeometryReader { proxy in
+            ZStack {
+                controlButton(.previous, x: 267 / 640, y: 222 / 480, width: 72 / 640, height: 58 / 480, in: proxy.size)
+                controlButton(.next, x: 355 / 640, y: 222 / 480, width: 72 / 640, height: 58 / 480, in: proxy.size)
+                controlButton(.plus, x: 826 / 640, y: 222 / 480, width: 76 / 640, height: 60 / 480, in: proxy.size)
+                controlButton(.minus, x: 910 / 640, y: 222 / 480, width: 76 / 640, height: 60 / 480, in: proxy.size)
+                controlButton(.eq, x: 990 / 640, y: 222 / 480, width: 72 / 640, height: 60 / 480, in: proxy.size)
+                controlButton(.playPause, x: 901 / 640, y: 752 / 480, width: 82 / 640, height: 74 / 480, in: proxy.size)
 
-            Rectangle()
-                .fill(.clear)
-                .contentShape(Rectangle())
-                .gesture(
-                    DragGesture(minimumDistance: 10)
-                        .onEnded { value in
-                            let dx = value.translation.width
-                            let dy = value.translation.height
-                            if abs(dx) > abs(dy), abs(dx) > 28 {
-                                trigger(dx < 0 ? .next : .previous)
-                            } else if abs(dy) > 22 {
-                                progress = max(0, min(1, progress - dy / 420))
-                                haptic(.selection)
+                Rectangle()
+                    .fill(.clear)
+                    .contentShape(Rectangle())
+                    .gesture(
+                        DragGesture(minimumDistance: 12)
+                            .onEnded { value in
+                                let dx = value.translation.width
+                                let dy = value.translation.height
+                                if abs(dx) > abs(dy), abs(dx) > 28 {
+                                    trigger(dx < 0 ? .next : .previous)
+                                } else if abs(dy) > 22 {
+                                    progress = max(0, min(1, progress - dy / 420))
+                                    haptic(.selection)
+                                }
                             }
-                        }
-                )
-                .accessibilityLabel("Player surface")
+                    )
+                    .accessibilityLabel("Player surface")
+                    .allowsHitTesting(false)
+            }
         }
-        .frame(width: width, height: height)
+        .frame(width: sourceWidth, height: sourceHeight)
     }
 
-    private func buttonZone(x: CGFloat, y: CGFloat, width: CGFloat, height: CGFloat, control: Control) -> some View {
+    private func controlButton(
+        _ control: Control,
+        x: CGFloat,
+        y: CGFloat,
+        width: CGFloat,
+        height: CGFloat,
+        in size: CGSize
+    ) -> some View {
         Button {
             trigger(control)
         } label: {
-            Color.clear
-                .frame(width: 1, height: 1)
-                .contentShape(Rectangle())
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(.clear)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color.black.opacity(pressedControl == control ? 0.10 : 0))
+                }
+                .scaleEffect(pressedControl == control ? 0.92 : 1)
         }
         .buttonStyle(.plain)
-        .frame(width: width * 1000, height: height * 1000)
-        .scaleEffect(pressedControl == control ? 0.92 : 1)
-        .position(x: x * 1000, y: y * 1000)
+        .frame(width: size.width * width, height: size.height * height)
+        .position(x: size.width * x, y: size.height * y)
         .accessibilityLabel(control.label)
     }
 
     private func trigger(_ control: Control) {
         pressedControl = control
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.11) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
             withAnimation(.easeOut(duration: 0.12)) { pressedControl = nil }
         }
 
@@ -135,7 +150,7 @@ struct PhysicalPlayerView: View {
         case .playPause:
             isPlaying.toggle()
             if isPlaying {
-                withAnimation(.linear(duration: 2.4).repeatForever(autoreverses: false)) {
+                withAnimation(.linear(duration: 2.2).repeatForever(autoreverses: false)) {
                     reelPhase += 360
                 }
                 haptic(.medium)
@@ -145,11 +160,11 @@ struct PhysicalPlayerView: View {
             }
         case .previous:
             progress = max(0, progress - 0.02)
-            reelPhase -= 20
+            reelPhase -= 24
             haptic(.rigid)
         case .next:
             progress = min(1, progress + 0.02)
-            reelPhase += 20
+            reelPhase += 24
             haptic(.rigid)
         case .plus, .minus, .eq:
             haptic(.selection)
