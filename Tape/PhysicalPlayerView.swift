@@ -48,8 +48,6 @@ struct PhysicalPlayerView: View {
         .accessibilityLabel("Tape hi-fi cassette player")
     }
 
-    // MARK: - Main body
-
     private var cassetteBody: some View {
         RoundedRectangle(cornerRadius: 42, style: .continuous)
             .fill(surface)
@@ -104,8 +102,6 @@ struct PhysicalPlayerView: View {
         .position(x: 600, y: 82)
     }
 
-    // MARK: - Reels
-
     private var reelStage: some View {
         HStack(spacing: 138) {
             ReelModule(tint: graphite, isPlaying: isPlaying)
@@ -144,8 +140,6 @@ struct PhysicalPlayerView: View {
         }
         .allowsHitTesting(false)
     }
-
-    // MARK: - Controls
 
     private var controlRail: some View {
         HStack(spacing: 10) {
@@ -189,8 +183,6 @@ struct PhysicalPlayerView: View {
         }
         .buttonStyle(.plain)
     }
-
-    // MARK: - Bottom information
 
     private var bottomInfo: some View {
         HStack(alignment: .center, spacing: 28) {
@@ -237,8 +229,6 @@ struct PhysicalPlayerView: View {
         .frame(width: 1088)
         .position(x: 600, y: 658)
     }
-
-    // MARK: - Interaction
 
     private func togglePlayback() {
         isPlaying.toggle()
@@ -290,6 +280,8 @@ private struct ReelModule: View {
     let tint: Color
     let isPlaying: Bool
 
+    private let centerPaper = Color(red: 0.965, green: 0.963, blue: 0.950)
+
     var body: some View {
         TimelineView(.animation(paused: !isPlaying)) { context in
             let seconds = context.date.timeIntervalSinceReferenceDate
@@ -333,7 +325,7 @@ private struct ReelModule: View {
                     .frame(width: 34, height: 34)
 
                 Circle()
-                    .fill(paper)
+                    .fill(centerPaper)
                     .frame(width: 10, height: 10)
             }
             .frame(width: 330, height: 330)
