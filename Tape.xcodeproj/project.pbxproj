@@ -11,6 +11,7 @@
 		A00000010000000000000003 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000110000000000000003 /* DesignSystem.swift */; };
 		A00000010000000000000004 /* ReelAssemblyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000110000000000000004 /* ReelAssemblyView.swift */; };
 		A00000010000000000000006 /* PhysicalPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000110000000000000006 /* PhysicalPlayerView.swift */; };
+		A00000010000000000000007 /* ReferenceArtwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000110000000000000007 /* ReferenceArtwork.swift */; };
 		A00000010000000000000005 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00000130000000000000001 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 /* Begin PBXFileReference section */
@@ -20,6 +21,7 @@
 		A00000110000000000000003 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
 		A00000110000000000000004 /* ReelAssemblyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReelAssemblyView.swift; sourceTree = "<group>"; };
 		A00000110000000000000006 /* PhysicalPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhysicalPlayerView.swift; sourceTree = "<group>"; };
+		A00000110000000000000007 /* ReferenceArtwork.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReferenceArtwork.swift; sourceTree = "<group>"; };
 		A00000120000000000000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A00000130000000000000001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -28,7 +30,7 @@
 /* End PBXFrameworksBuildPhase section */
 /* Begin PBXGroup section */
 		A00000300000000000000001 = {isa = PBXGroup; children = (A00000300000000000000002 /* Tape */, A00000300000000000000003 /* Products */, ); sourceTree = "<group>"; };
-		A00000300000000000000002 /* Tape */ = {isa = PBXGroup; children = (A00000110000000000000001 /* TapeApp.swift */, A00000110000000000000002 /* ContentView.swift */, A00000110000000000000003 /* DesignSystem.swift */, A00000110000000000000004 /* ReelAssemblyView.swift */, A00000110000000000000006 /* PhysicalPlayerView.swift */, A00000120000000000000001 /* Info.plist */, A00000130000000000000001 /* Assets.xcassets */, ); path = Tape; sourceTree = "<group>"; };
+		A00000300000000000000002 /* Tape */ = {isa = PBXGroup; children = (A00000110000000000000001 /* TapeApp.swift */, A00000110000000000000002 /* ContentView.swift */, A00000110000000000000003 /* DesignSystem.swift */, A00000110000000000000004 /* ReelAssemblyView.swift */, A00000110000000000000006 /* PhysicalPlayerView.swift */, A00000110000000000000007 /* ReferenceArtwork.swift */, A00000120000000000000001 /* Info.plist */, A00000130000000000000001 /* Assets.xcassets */, ); path = Tape; sourceTree = "<group>"; };
 		A00000300000000000000003 /* Products */ = {isa = PBXGroup; children = (A00000100000000000000001 /* Tape.app */, ); name = Products; sourceTree = "<group>"; };
 /* End PBXGroup section */
 /* Begin PBXNativeTarget section */
@@ -41,7 +43,7 @@
 		A00000410000000000000002 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A00000010000000000000005 /* Assets.xcassets in Resources */, ); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 /* Begin PBXSourcesBuildPhase section */
-		A00000410000000000000001 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A00000010000000000000001 /* TapeApp.swift in Sources */, A00000010000000000000002 /* ContentView.swift in Sources */, A00000010000000000000003 /* DesignSystem.swift in Sources */, A00000010000000000000004 /* ReelAssemblyView.swift in Sources */, A00000010000000000000006 /* PhysicalPlayerView.swift in Sources */, ); runOnlyForDeploymentPostprocessing = 0; };
+		A00000410000000000000001 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A00000010000000000000001 /* TapeApp.swift in Sources */, A00000010000000000000002 /* ContentView.swift in Sources */, A00000010000000000000003 /* DesignSystem.swift in Sources */, A00000010000000000000004 /* ReelAssemblyView.swift in Sources */, A00000010000000000000006 /* PhysicalPlayerView.swift in Sources */, A00000010000000000000007 /* ReferenceArtwork.swift in Sources */, ); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 /* Begin XCBuildConfiguration section */
 		A00000700000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; }; name = Debug; };
