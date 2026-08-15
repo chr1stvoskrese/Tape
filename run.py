@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Open, build, install, and launch Tape in the default basic iPhone Simulator.
+"""Open, build, install, and launch Tape in an iPhone Simulator.
 
 Run from the repository root on macOS:
     python3 run.py
@@ -10,7 +10,6 @@ No third-party Python packages are required.
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import subprocess
 import sys
@@ -43,22 +42,29 @@ def choose_simulator() -> tuple[str, str]:
     )
     payload = json.loads(result.stdout)
 
-    candidates: list[tuple[str, str]] = []
+    # Prefer a small/basic iPhone, but accept whatever is installed.
     preferred = {
         "iPhone SE (3rd generation)": 0,
         "iPhone 13 mini": 1,
-        "iPhone 13": 2,
-        "iPhone 12 mini": 3,
-        "iPhone 12": 4,
+        "iPhone 12 mini": 2,
+        "iPhone 13": 3,
+        "iPhone 14": 4,
+        "iPhone 15": 5,
+        "iPhone 16e": 6,
+        "iPhone 16": 7,
     }
 
+    candidates: list[tuple[str, str]] = []
     for runtime_devices in payload.get("devices", {}).values():
         for device in runtime_devices:
             if device.get("isAvailable") is not True:
                 continue
-            if not device.get("name", "").startswith("iPhone"):
+            name = device.get("name", "")
+            if not name.startswith("iPhone"):
                 continue
-            candidates.append((device["name"], device["udid"]))
+            udid = device.get("udid")
+            if udid:
+                candidates.append((name, udid))
 
     if not candidates:
         raise RuntimeError("No available iPhone simulator was found.")
@@ -76,7 +82,19 @@ def boot_simulator(udid: str, name: str) -> None:
     ).stdout
 
     if udid not in state:
-        run("xcrun", "simctl", "boot", udid)
+        try:
+            run("xcrun", "simctl", "boot", udid)
+        except subprocess.CalledProcessError:
+            # Another process (often Simulator itself) may have booted it
+            # between the state check and the boot command.
+            state = subprocess.run(
+                ["xcrun", "simctl", "list", "devices", "booted"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout
+            if udid not in state:
+                raise
         time.sleep(2)
 
     run("open", "-a", "Simulator")
@@ -119,7 +137,7 @@ def main() -> int:
         "-sdk",
         "iphonesimulator",
         "-destination",
-        f"id={udid}",
+        f"platform=iOS Simulator,id={udid}",
         "-derivedDataPath",
         str(DERIVED_DATA),
         "build",
