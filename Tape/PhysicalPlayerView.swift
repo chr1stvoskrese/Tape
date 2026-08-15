@@ -25,7 +25,7 @@ struct PhysicalPlayerView: View {
         let sourceHeight = finalWidth
 
         return ZStack {
-            Image(uiImage: ReferenceArtwork2.image)
+            Image(uiImage: ReferenceArtwork.image)
                 .resizable()
                 .scaledToFill()
                 .frame(width: sourceWidth, height: sourceHeight)
@@ -70,7 +70,7 @@ struct PhysicalPlayerView: View {
     }
 
     private func reelCore(crop: CGRect, size: CGFloat) -> some View {
-        let cropped = ReferenceArtwork2.image.cgImage.flatMap { $0.cropping(to: crop) }.map(UIImage.init)
+        let cropped = ReferenceArtwork.image.cgImage.flatMap { $0.cropping(to: crop) }.map(UIImage.init)
         return Group {
             if let cropped {
                 Image(uiImage: cropped)
