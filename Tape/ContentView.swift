@@ -4,393 +4,386 @@ import UIKit
 struct ContentView: View {
     @State private var isPlaying = false
     @State private var progress = 0.38
-    @State private var isPressed = false
-    @State private var reelPhase: Double = 0
+    @State private var pressedControl: Control? = nil
 
     var body: some View {
         GeometryReader { proxy in
             ZStack {
-                TapePalette.shell
-                    .ignoresSafeArea()
+                TapeBackdrop()
 
-                CassettePlayerView(
+                VerticalPlayer(
                     isPlaying: isPlaying,
-                    progress: progress,
-                    reelPhase: reelPhase,
-                    isPressed: isPressed,
-                    onPrevious: {
-                        haptic(.impact(.light))
-                        withAnimation(.easeOut(duration: 0.25)) {
-                            progress = max(0, progress - 0.07)
-                        }
-                    },
-                    onPlayPause: {
-                        let next = !isPlaying
-                        haptic(next ? .impact(.medium) : .impact(.light))
-                        withAnimation(.easeInOut(duration: next ? 0.7 : 0.4)) {
-                            isPlaying = next
-                        }
-                        withAnimation(.linear(duration: 3.2).repeatForever(autoreverses: false)) {
-                            reelPhase += next ? 360 : 0
-                        }
-                    },
-                    onNext: {
-                        haptic(.impact(.light))
-                        withAnimation(.easeOut(duration: 0.25)) {
-                            progress = min(1, progress + 0.07)
-                        }
-                    },
-                    onSeek: { value in
-                        progress = min(1, max(0, value))
-                    },
-                    onSeekEnded: {
-                        haptic(.selection)
-                    }
+                    progress: $progress,
+                    pressedControl: $pressedControl,
+                    onPlayPause: togglePlayback,
+                    onPrevious: previousTrack,
+                    onNext: nextTrack
                 )
                 .frame(
-                    width: min(proxy.size.height * 0.62, proxy.size.width * 0.31),
-                    height: min(proxy.size.height * 0.86, proxy.size.width * 0.50)
+                    width: min(proxy.size.height * 0.66, 252),
+                    height: min(proxy.size.height * 0.90, 380)
                 )
-                .animation(.easeOut(duration: 0.25), value: proxy.size)
+                .animation(.snappy(duration: 0.24), value: isPlaying)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .ignoresSafeArea()
         .preferredColorScheme(.dark)
         .statusBarHidden(true)
-        .persistentSystemOverlays(.hidden)
     }
 
-    private func haptic(_ event: HapticEvent) {
-        switch event {
-        case .impact(let style):
-            let generator = UIImpactFeedbackGenerator(style: style)
-            generator.prepare()
-            generator.impactOccurred()
-        case .selection:
-            let generator = UISelectionFeedbackGenerator()
-            generator.prepare()
-            generator.selectionChanged()
+    private func togglePlayback() {
+        let next = !isPlaying
+        withAnimation(.easeInOut(duration: next ? 0.55 : 0.32)) {
+            isPlaying = next
         }
+        Haptics.transport(next ? .play : .pause)
     }
 
-    private enum HapticEvent {
-        case impact(UIImpactFeedbackGenerator.FeedbackStyle)
-        case selection
+    private func previousTrack() {
+        withAnimation(.snappy(duration: 0.22)) {
+            progress = 0
+        }
+        Haptics.transport(.skip)
+    }
+
+    private func nextTrack() {
+        withAnimation(.snappy(duration: 0.22)) {
+            progress = 0
+        }
+        Haptics.transport(.skip)
+    }
+
+    enum Control {
+        case previous, playPause, next
     }
 }
 
-private struct CassettePlayerView: View {
+private struct TapeBackdrop: View {
+    var body: some View {
+        ZStack {
+            Color(red: 0.022, green: 0.021, blue: 0.019)
+
+            RadialGradient(
+                colors: [
+                    Color.white.opacity(0.045),
+                    .clear
+                ],
+                center: .center,
+                startRadius: 10,
+                endRadius: 430
+            )
+
+            LinearGradient(
+                colors: [
+                    .clear,
+                    Color.black.opacity(0.30),
+                    .clear
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+    }
+}
+
+private struct VerticalPlayer: View {
     let isPlaying: Bool
-    let progress: Double
-    let reelPhase: Double
-    let isPressed: Bool
-    let onPrevious: () -> Void
+    @Binding var progress: Double
+    @Binding var pressedControl: ContentView.Control?
+
     let onPlayPause: () -> Void
+    let onPrevious: () -> Void
     let onNext: () -> Void
-    let onSeek: (Double) -> Void
-    let onSeekEnded: () -> Void
 
     var body: some View {
+        ZStack {
+            deviceShadow
+            deviceBody
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Tape music player")
+    }
+
+    private var deviceShadow: some View {
+        RoundedRectangle(cornerRadius: 24, style: .continuous)
+            .fill(Color.black.opacity(0.60))
+            .blur(radius: 16)
+            .offset(y: 16)
+            .scaleEffect(0.94)
+    }
+
+    private var deviceBody: some View {
         GeometryReader { proxy in
-            let w = proxy.size.width
-            let h = proxy.size.height
+            let width = proxy.size.width
+            let height = proxy.size.height
 
             ZStack {
-                RoundedRectangle(cornerRadius: w * 0.085, style: .continuous)
+                RoundedRectangle(cornerRadius: width * 0.105, style: .continuous)
                     .fill(
                         LinearGradient(
                             colors: [
-                                TapePalette.surface,
-                                TapePalette.inset,
-                                TapePalette.surface.opacity(0.96)
+                                TapePalette.deviceTop,
+                                TapePalette.device,
+                                TapePalette.deviceBottom
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
                     .overlay {
-                        RoundedRectangle(cornerRadius: w * 0.085, style: .continuous)
-                            .stroke(Color.white.opacity(0.085), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: width * 0.105, style: .continuous)
+                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
                     }
-                    .shadow(color: .black.opacity(0.48), radius: 30, y: 20)
-                    .scaleEffect(isPressed ? 0.985 : 1)
 
                 VStack(spacing: 0) {
-                    cassetteBrand
-                        .padding(.top, h * 0.055)
+                    topCap
+                        .frame(height: height * 0.10)
 
-                    Spacer(minLength: 8)
+                    cassetteWindow
+                        .frame(height: height * 0.47)
+                        .padding(.horizontal, width * 0.095)
 
-                    reelWindow
-                        .frame(height: h * 0.42)
+                    metadata
+                        .frame(height: height * 0.14)
+                        .padding(.horizontal, width * 0.105)
 
-                    Spacer(minLength: 10)
+                    progressStrip
+                        .padding(.horizontal, width * 0.105)
 
-                    trackInfo
+                    Spacer(minLength: 0)
 
-                    seekControl
-                        .padding(.top, h * 0.03)
-
-                    transport
-                        .padding(.top, h * 0.035)
-                        .padding(.bottom, h * 0.055)
+                    transportDeck
+                        .frame(height: height * 0.20)
+                        .padding(.horizontal, width * 0.075)
+                        .padding(.bottom, height * 0.035)
                 }
-                .padding(.horizontal, w * 0.095)
+                .padding(.horizontal, width * 0.035)
             }
-            .contentShape(Rectangle())
-        }
-        .accessibilityElement(children: .contain)
-    }
-
-    private var cassetteBrand: some View {
-        HStack(alignment: .center) {
-            Text("TAPE")
-                .font(.system(size: 11, weight: .bold, design: .rounded))
-                .tracking(4.2)
-                .foregroundStyle(TapePalette.text.opacity(0.78))
-
-            Spacer()
-
-            Circle()
-                .fill(isPlaying ? TapePalette.accent : Color.white.opacity(0.12))
-                .frame(width: 5, height: 5)
-                .shadow(color: isPlaying ? TapePalette.accent.opacity(0.7) : .clear, radius: 7)
         }
     }
 
-    private var reelWindow: some View {
+    private var topCap: some View {
+        VStack(spacing: 6) {
+            HStack(alignment: .center) {
+                MonospacedLabel(text: "TAPE", size: 8, tracking: 2.4, color: TapePalette.softText)
+
+                Spacer()
+
+                HStack(spacing: 5) {
+                    Circle()
+                        .fill(isPlaying ? TapePalette.accent : TapePalette.mutedDot)
+                        .frame(width: 4, height: 4)
+                        .shadow(color: isPlaying ? TapePalette.accent.opacity(0.55) : .clear, radius: 4)
+
+                    MonospacedLabel(
+                        text: isPlaying ? "PLAY" : "READY",
+                        size: 7,
+                        tracking: 1.4,
+                        color: isPlaying ? TapePalette.accent : TapePalette.muted
+                    )
+                }
+            }
+
+            Capsule()
+                .fill(Color.black.opacity(0.35))
+                .frame(height: 1)
+        }
+        .padding(.horizontal, 7)
+        .padding(.top, 6)
+    }
+
+    private var cassetteWindow: some View {
         GeometryReader { proxy in
-            let size = min(proxy.size.width, proxy.size.height * 1.55)
-            let reel = min(proxy.size.height * 0.75, size * 0.36)
+            let size = min(proxy.size.width, proxy.size.height)
 
             ZStack {
-                RoundedRectangle(cornerRadius: proxy.size.height * 0.08, style: .continuous)
-                    .fill(Color.black.opacity(0.18))
+                RoundedRectangle(cornerRadius: size * 0.105, style: .continuous)
+                    .fill(TapePalette.window)
                     .overlay {
-                        RoundedRectangle(cornerRadius: proxy.size.height * 0.08, style: .continuous)
-                            .stroke(Color.white.opacity(0.065), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: size * 0.105, style: .continuous)
+                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
                     }
+                    .shadow(color: .black.opacity(0.45), radius: 10, y: 6)
 
-                HStack(spacing: proxy.size.width * 0.06) {
-                    CassetteReel(size: reel, rotation: reelPhase * 0.94, isPlaying: isPlaying)
-                    TapePath()
-                    CassetteReel(size: reel, rotation: -reelPhase * 1.12, isPlaying: isPlaying)
+                VStack(spacing: 0) {
+                    HStack(spacing: size * 0.08) {
+                        ReelView(isPlaying: isPlaying, side: .left)
+                        TapeGuide(width: size * 0.11)
+                        ReelView(isPlaying: isPlaying, side: .right)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, size * 0.10)
+
+                    Spacer(minLength: size * 0.04)
+
+                    HStack {
+                        Text("HI-FI / LOSSLESS")
+                            .font(.system(size: 7, weight: .medium, design: .monospaced))
+                            .tracking(1.4)
+                            .foregroundStyle(TapePalette.windowText.opacity(0.52))
+                        Spacer()
+                        Text("01")
+                            .font(.system(size: 7, weight: .semibold, design: .monospaced))
+                            .foregroundStyle(TapePalette.accent.opacity(0.82))
+                    }
+                    .padding(.horizontal, size * 0.12)
                 }
-                .padding(.horizontal, proxy.size.width * 0.09)
+                .padding(.vertical, size * 0.12)
             }
         }
     }
 
-    private var trackInfo: some View {
-        VStack(spacing: 5) {
-            Text("Night Drive")
-                .font(.system(size: 20, weight: .semibold, design: .rounded))
-                .tracking(-0.35)
-                .foregroundStyle(TapePalette.text)
-                .lineLimit(1)
+    private var metadata: some View {
+        HStack(alignment: .center, spacing: 10) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Night Drive")
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .tracking(-0.15)
+                    .foregroundStyle(TapePalette.text)
+                    .lineLimit(1)
 
-            Text("CHROMATICS  ·  SIDE A")
-                .font(.system(size: 8.5, weight: .medium, design: .monospaced))
-                .tracking(1.5)
-                .foregroundStyle(TapePalette.muted)
-                .lineLimit(1)
+                Text("Chromatics")
+                    .font(.system(size: 8.5, weight: .medium))
+                    .foregroundStyle(TapePalette.muted)
+                    .lineLimit(1)
+            }
+
+            Spacer(minLength: 4)
+
+            VStack(alignment: .trailing, spacing: 3) {
+                Text("FLAC")
+                    .font(.system(size: 7.5, weight: .semibold, design: .monospaced))
+                    .tracking(1.0)
+                    .foregroundStyle(TapePalette.accent)
+                Text("24 / 96")
+                    .font(.system(size: 7, weight: .medium, design: .monospaced))
+                    .foregroundStyle(TapePalette.muted)
+            }
         }
-        .frame(maxWidth: .infinity)
     }
 
-    private var seekControl: some View {
+    private var progressStrip: some View {
         GeometryReader { proxy in
             let width = proxy.size.width
+            let thumbX = max(0, min(width * progress, width))
 
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(Color.white.opacity(0.075))
+                    .fill(Color.white.opacity(0.09))
                     .frame(height: 2)
 
                 Capsule()
-                    .fill(TapePalette.accent.opacity(0.9))
-                    .frame(width: max(3, width * progress), height: 2)
+                    .fill(TapePalette.accent)
+                    .frame(width: max(2, thumbX), height: 2)
 
                 Circle()
-                    .fill(TapePalette.text.opacity(0.95))
+                    .fill(TapePalette.windowText)
                     .frame(width: 6, height: 6)
-                    .offset(x: max(0, width * progress - 3))
+                    .offset(x: thumbX - 3)
             }
+            .frame(height: 16)
             .contentShape(Rectangle())
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { value in
-                        onSeek(value.location.x / width)
+                        let next = min(1, max(0, value.location.x / width))
+                        if abs(next - progress) > 0.035 {
+                            Haptics.scrubTick()
+                        }
+                        progress = next
                     }
                     .onEnded { _ in
-                        onSeekEnded()
+                        Haptics.scrubEnd()
                     }
             )
         }
-        .frame(height: 14)
-        .overlay {
-            HStack {
-                Text(timeString(progress))
-                Spacer()
-                Text("04:12")
-            }
-            .font(.system(size: 7.5, weight: .medium, design: .monospaced))
-            .tracking(0.8)
-            .foregroundStyle(TapePalette.muted.opacity(0.9))
-            .offset(y: 13)
-        }
+        .frame(height: 18)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Playback position")
         .accessibilityValue("\(Int(progress * 100)) percent")
         .accessibilityAdjustableAction { direction in
             switch direction {
-            case .increment: onSeek(progress + 0.05)
-            case .decrement: onSeek(progress - 0.05)
-            @unknown default: break
+            case .increment:
+                progress = min(1, progress + 0.05)
+                Haptics.scrubTick()
+            case .decrement:
+                progress = max(0, progress - 0.05)
+                Haptics.scrubTick()
+            @unknown default:
+                break
             }
         }
     }
 
-    private var transport: some View {
-        HStack(spacing: 0) {
-            CassetteButton(systemName: "backward.fill", size: 13, action: onPrevious)
+    private var transportDeck: some View {
+        HStack(spacing: 12) {
+            PlayerButton(
+                title: "Previous",
+                systemName: "backward.fill",
+                control: .previous,
+                pressedControl: $pressedControl,
+                action: onPrevious
+            )
 
-            Spacer()
-
-            CassetteButton(
+            PlayerButton(
+                title: isPlaying ? "Pause" : "Play",
                 systemName: isPlaying ? "pause.fill" : "play.fill",
-                size: 16,
-                primary: true,
+                control: .playPause,
+                isPrimary: true,
+                pressedControl: $pressedControl,
                 action: onPlayPause
             )
 
-            Spacer()
-
-            CassetteButton(systemName: "forward.fill", size: 13, action: onNext)
-        }
-    }
-
-    private func timeString(_ value: Double) -> String {
-        let totalSeconds = Int(value * 252)
-        return String(format: "%02d:%02d", totalSeconds / 60, totalSeconds % 60)
-    }
-}
-
-private struct CassetteReel: View {
-    let size: CGFloat
-    let rotation: Double
-    let isPlaying: Bool
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [
-                            Color.white.opacity(0.11),
-                            Color.white.opacity(0.035),
-                            Color.black.opacity(0.33)
-                        ],
-                        center: .center,
-                        startRadius: 1,
-                        endRadius: size * 0.72
-                    )
-                )
-                .overlay(Circle().stroke(Color.white.opacity(0.11), lineWidth: 1))
-
-            Circle()
-                .stroke(Color.black.opacity(0.36), lineWidth: size * 0.08)
-                .padding(size * 0.13)
-
-            ZStack {
-                ForEach(0..<5, id: \.self) { index in
-                    Capsule(style: .circular)
-                        .fill(Color.white.opacity(0.13))
-                        .frame(width: size * 0.045, height: size * 0.28)
-                        .offset(y: -size * 0.18)
-                        .rotationEffect(.degrees(Double(index) * 72))
-                }
-            }
-            .rotationEffect(.degrees(rotation))
-            .animation(
-                isPlaying
-                    ? .linear(duration: 2.6).repeatForever(autoreverses: false)
-                    : .easeOut(duration: 0.45),
-                value: isPlaying
+            PlayerButton(
+                title: "Next",
+                systemName: "forward.fill",
+                control: .next,
+                pressedControl: $pressedControl,
+                action: onNext
             )
-
-            Circle()
-                .fill(TapePalette.inset)
-                .frame(width: size * 0.27)
-                .overlay(Circle().stroke(Color.white.opacity(0.10), lineWidth: 1))
-
-            Circle()
-                .fill(TapePalette.accent.opacity(0.9))
-                .frame(width: size * 0.055)
         }
-        .frame(width: size, height: size)
-        .shadow(color: .black.opacity(0.4), radius: size * 0.10, y: size * 0.06)
     }
 }
 
-private struct TapePath: View {
-    var body: some View {
-        GeometryReader { proxy in
-            ZStack {
-                Capsule()
-                    .fill(Color.white.opacity(0.065))
-                    .frame(width: proxy.size.width, height: 2)
-
-                Capsule()
-                    .fill(TapePalette.accent.opacity(0.18))
-                    .frame(width: proxy.size.width * 0.7, height: 1)
-
-                VStack(spacing: 3) {
-                    Circle().fill(Color.white.opacity(0.08)).frame(width: 4, height: 4)
-                    Circle().fill(Color.white.opacity(0.08)).frame(width: 4, height: 4)
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-        .frame(maxWidth: .infinity)
-    }
-}
-
-private struct CassetteButton: View {
+private struct PlayerButton: View {
+    let title: String
     let systemName: String
-    let size: CGFloat
-    var primary = false
+    let control: ContentView.Control
+    var isPrimary = false
+    @Binding var pressedControl: ContentView.Control?
     let action: () -> Void
 
-    @State private var pressed = false
+    private var isPressed: Bool { pressedControl == control }
 
     var body: some View {
         Button {
-            pressed = true
+            pressedControl = control
             action()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) {
-                withAnimation(.easeOut(duration: 0.14)) {
-                    pressed = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.09) {
+                withAnimation(.easeOut(duration: 0.12)) {
+                    pressedControl = nil
                 }
             }
         } label: {
             Image(systemName: systemName)
-                .font(.system(size: size, weight: .semibold))
-                .foregroundStyle(primary ? TapePalette.shell : TapePalette.text.opacity(0.86))
-                .frame(width: primary ? 42 : 34, height: primary ? 42 : 34)
+                .font(.system(size: isPrimary ? 13 : 10, weight: .bold))
+                .foregroundStyle(isPrimary ? TapePalette.buttonInk : TapePalette.text)
+                .frame(width: isPrimary ? 48 : 38, height: isPrimary ? 42 : 36)
                 .background {
-                    Circle()
-                        .fill(primary ? TapePalette.accent : Color.white.opacity(0.06))
-                        .overlay(Circle().stroke(Color.white.opacity(0.08), lineWidth: 1))
+                    RoundedRectangle(cornerRadius: isPrimary ? 12 : 10, style: .continuous)
+                        .fill(isPrimary ? TapePalette.accent : TapePalette.button)
+                        .overlay {
+                            RoundedRectangle(cornerRadius: isPrimary ? 12 : 10, style: .continuous)
+                                .stroke(Color.white.opacity(isPrimary ? 0.12 : 0.07), lineWidth: 1)
+                        }
                 }
-                .scaleEffect(pressed ? 0.91 : 1)
-                .offset(y: pressed ? 1.5 : 0)
+                .scaleEffect(isPressed ? 0.94 : 1)
+                .offset(y: isPressed ? 1.5 : 0)
+                .shadow(color: .black.opacity(0.38), radius: isPressed ? 1 : 4, y: isPressed ? 1 : 3)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(
-            systemName == "play.fill" ? "Play" :
-            systemName == "pause.fill" ? "Pause" :
-            systemName.contains("backward") ? "Previous track" : "Next track"
-        )
+        .accessibilityLabel(title)
     }
 }
 
