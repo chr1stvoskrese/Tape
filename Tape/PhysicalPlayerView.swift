@@ -13,316 +13,328 @@ struct PhysicalPlayerView: View {
     private let orange = Color(red: 0.93, green: 0.42, blue: 0.06)
     private let hubRing = Color(red: 0.85, green: 0.83, blue: 0.77)
 
+    private let designSize = CGSize(width: 1000, height: 620)
+
     var body: some View {
         GeometryReader { proxy in
+            let scale = min(
+                proxy.size.width * 0.94 / designSize.width,
+                proxy.size.height * 0.90 / designSize.height
+            )
+
             ZStack {
                 backdrop.ignoresSafeArea()
-                deck(in: proxy.size)
+
+                deck
+                    .scaleEffect(scale)
+                    .rotationEffect(.degrees(180))
+                    .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
             }
         }
         .preferredColorScheme(.light)
         .statusBarHidden(true)
     }
 
-    private func deck(in screen: CGSize) -> some View {
-        let height = min(screen.height * 0.86, 620)
-        let width = min(screen.width * 0.92, height * 1.62)
-
-        return ZStack {
-            bodyShell(width: width, height: height)
-
-            VStack(spacing: 0) {
-                topPlate.frame(height: height * 0.16)
-                reelsRow.frame(maxWidth: .infinity, maxHeight: .infinity)
-                bottomPlate.frame(height: height * 0.26)
-            }
-            .frame(width: width, height: height)
-            .padding(.horizontal, 12)
+    private var deck: some View {
+        ZStack {
+            bodyShell
+            topNotch
+            reelsAndArms
+            dashes
+            transportButtons
+            memoryLabel
+            orangeButtons
+            onOff
+            bottomPlate
         }
-        .frame(width: width, height: height)
-        .rotationEffect(.degrees(180))
+        .frame(width: designSize.width, height: designSize.height)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Tape physical music player")
     }
 
-    private func bodyShell(width: CGFloat, height: CGFloat) -> some View {
-        let corner = height * 0.06
+    private var bodyShell: some View {
+        RoundedRectangle(cornerRadius: 38, style: .continuous)
+            .fill(cream)
+            .shadow(color: .black.opacity(0.16), radius: 10, y: 6)
+            .overlay {
+                RoundedRectangle(cornerRadius: 38, style: .continuous)
+                    .stroke(ink, lineWidth: 4)
+            }
+    }
 
-        return ZStack {
-            RoundedRectangle(cornerRadius: corner, style: .continuous)
-                .fill(cream)
-                .shadow(color: .black.opacity(0.20), radius: 12, y: 8)
-
-            RoundedRectangle(cornerRadius: corner, style: .continuous)
-                .stroke(ink, lineWidth: 4)
-
+    private var topNotch: some View {
+        ZStack {
             RoundedRectangle(cornerRadius: 7, style: .continuous)
                 .fill(cream)
                 .overlay {
                     RoundedRectangle(cornerRadius: 7, style: .continuous)
                         .stroke(ink, lineWidth: 4)
                 }
-                .frame(width: width * 0.16, height: 16)
-                .offset(x: width * 0.09, y: -height / 2 - 5)
+                .frame(width: 160, height: 16)
 
             Rectangle()
                 .fill(cream)
-                .frame(width: width * 0.16 - 12, height: 10)
-                .offset(x: width * 0.09, y: -height / 2)
+                .frame(width: 148, height: 10)
+                .offset(y: 6)
+        }
+        .position(x: 495, y: 0)
+    }
+
+    private var dashes: some View {
+        ForEach(0..<2, id: \.self) { i in
+            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                .fill(olive)
+                .frame(width: 26, height: 8)
+                .position(x: 80, y: 50 + CGFloat(i) * 28)
         }
     }
 
-    private var topPlate: some View {
-        HStack(spacing: 16) {
-            VStack(spacing: 9) {
-                dash(width: 26)
-                dash(width: 26)
+    private var transportButtons: some View {
+        let items: [(Control, String)] = [
+            (.previous, "backward.end.fill"),
+            (.rewind, "backward.fill"),
+            (.forward, "forward.fill")
+        ]
+
+        return ForEach(0..<items.count, id: \.self) { i in
+            circleControl(items[i].0, fill: ink) {
+                Image(systemName: items[i].1)
+                    .font(.system(size: 18, weight: .bold))
             }
-
-            HStack(spacing: 14) {
-                circleControl(.previous, fill: ink) {
-                    Image(systemName: "backward.end.fill")
-                        .font(.system(size: 17, weight: .bold))
-                }
-                circleControl(.rewind, fill: ink) {
-                    Image(systemName: "backward.fill")
-                        .font(.system(size: 17, weight: .bold))
-                }
-                circleControl(.forward, fill: ink) {
-                    Image(systemName: "forward.fill")
-                        .font(.system(size: 17, weight: .bold))
-                }
-            }
-
-            Spacer()
-
-            HStack(spacing: 7) {
-                Image(systemName: "arrowtriangle.down.fill")
-                    .font(.system(size: 10))
-                Text("Memory card")
-                    .font(.system(size: 17, weight: .bold))
-            }
-            .foregroundStyle(ink)
-
-            Spacer()
-
-            HStack(spacing: 14) {
-                circleControl(.volumeUp, fill: orange) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 18, weight: .bold))
-                }
-                circleControl(.volumeDown, fill: orange) {
-                    Image(systemName: "minus")
-                        .font(.system(size: 18, weight: .bold))
-                }
-                circleControl(.eq, fill: orange) {
-                    Text("EQ")
-                        .font(.system(size: 14, weight: .bold))
-                }
-            }
+            .position(x: 146 + CGFloat(i) * 92, y: 62)
         }
-        .padding(.leading, 26)
-        .padding(.trailing, 48)
-        .overlay(alignment: .topTrailing) {
-            onOff
-                .padding(.top, 16)
-                .padding(.trailing, 12)
+    }
+
+    private var memoryLabel: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "arrowtriangle.down.fill")
+                .font(.system(size: 11))
+            Text("Memory card")
+                .font(.system(size: 18, weight: .bold))
+        }
+        .foregroundStyle(ink)
+        .position(x: 495, y: 62)
+    }
+
+    private var orangeButtons: some View {
+        Group {
+            circleControl(.volumeUp, fill: orange) {
+                Image(systemName: "plus")
+                    .font(.system(size: 18, weight: .bold))
+            }
+            .position(x: 677, y: 62)
+
+            circleControl(.volumeDown, fill: orange) {
+                Image(systemName: "minus")
+                    .font(.system(size: 18, weight: .bold))
+            }
+            .position(x: 768, y: 62)
+
+            circleControl(.eq, fill: orange) {
+                Text("EQ")
+                    .font(.system(size: 15, weight: .bold))
+            }
+            .position(x: 858, y: 62)
         }
     }
 
     private var onOff: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 10) {
             Image(systemName: "arrow.up")
-                .font(.system(size: 11, weight: .heavy))
+                .font(.system(size: 12, weight: .heavy))
             Text("On")
-                .font(.system(size: 15, weight: .bold))
+                .font(.system(size: 16, weight: .bold))
+                .fixedSize()
                 .rotationEffect(.degrees(90))
-                .frame(width: 16, height: 26)
+                .frame(width: 20, height: 30)
             Text("Off")
-                .font(.system(size: 15, weight: .bold))
+                .font(.system(size: 16, weight: .bold))
+                .fixedSize()
                 .rotationEffect(.degrees(90))
-                .frame(width: 16, height: 30)
+                .frame(width: 20, height: 34)
             Image(systemName: "arrow.down")
-                .font(.system(size: 11, weight: .heavy))
+                .font(.system(size: 12, weight: .heavy))
         }
         .foregroundStyle(ink)
+        .position(x: 952, y: 105)
     }
 
-    private func dash(width: CGFloat) -> some View {
-        RoundedRectangle(cornerRadius: 3.5, style: .continuous)
-            .fill(olive)
-            .frame(width: width, height: 7)
-    }
+    private var reelsAndArms: some View {
+        ZStack {
+            reel(tape: ink, center: CGPoint(x: 288, y: 258))
+            reel(tape: orange, center: CGPoint(x: 712, y: 258))
 
-    private var reelsRow: some View {
-        GeometryReader { proxy in
-            let d = min(proxy.size.height * 0.80, proxy.size.width * 0.34)
+            toneArm(
+                pivot: CGPoint(x: 98, y: 358),
+                elbow: CGPoint(x: 150, y: 252),
+                tip: CGPoint(x: 198, y: 192),
+                head: CGPoint(x: 207, y: 178),
+                headAngle: 40,
+                color: ink
+            )
 
-            HStack(spacing: proxy.size.width * 0.10) {
-                reelUnit(.left, d: d)
-                reelUnit(.right, d: d)
-            }
-            .frame(width: proxy.size.width, height: proxy.size.height)
+            toneArm(
+                pivot: CGPoint(x: 800, y: 345),
+                elbow: CGPoint(x: 752, y: 248),
+                tip: CGPoint(x: 762, y: 188),
+                head: CGPoint(x: 768, y: 172),
+                headAngle: -40,
+                color: orange
+            )
         }
-        .padding(.horizontal, 34)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            isPlaying.toggle()
-            Haptics.transport(isPlaying ? .play : .pause)
-        }
+        .allowsHitTesting(false)
     }
 
-    private func reelUnit(_ unit: Side, d: CGFloat) -> some View {
-        reel(unit: unit, d: d)
-            .frame(width: d, height: d)
-            .overlay { toneArm(unit, d: d) }
-            .frame(width: d * 1.5, height: d * 1.5)
-    }
-
-    private func reel(unit: Side, d: CGFloat) -> some View {
+    private func reel(tape: Color, center: CGPoint) -> some View {
         TimelineView(.animation(paused: !isPlaying)) { context in
             let t = context.date.timeIntervalSinceReferenceDate
             let degrees = (t * 42).truncatingRemainder(dividingBy: 360)
-            let tape = unit == .left ? ink : orange
 
             ZStack {
                 Circle()
                     .fill(tape)
-                    .shadow(color: .black.opacity(0.25), radius: 5, x: 3, y: 4)
-
+                    .shadow(color: .black.opacity(0.18), radius: 5, x: 3, y: 4)
                 Circle().stroke(ink, lineWidth: 3)
 
                 Circle()
                     .fill(hubRing)
-                    .frame(width: d * 0.37, height: d * 0.37)
+                    .frame(width: 112, height: 112)
                     .overlay { Circle().stroke(ink, lineWidth: 2) }
 
                 Circle()
                     .fill(.white)
-                    .frame(width: d * 0.28, height: d * 0.28)
+                    .frame(width: 84, height: 84)
 
                 ForEach(0..<6, id: \.self) { i in
                     Rectangle()
                         .fill(hubRing)
-                        .frame(width: d * 0.05, height: d * 0.08)
-                        .offset(y: -d * 0.14)
+                        .frame(width: 15, height: 24)
+                        .offset(y: -42)
                         .rotationEffect(.degrees(Double(i) * 60))
                 }
             }
+            .frame(width: 300, height: 300)
             .rotationEffect(.degrees(degrees))
+            .contentShape(Circle())
+            .position(center)
+            .onTapGesture {
+                isPlaying.toggle()
+                Haptics.transport(isPlaying ? .play : .pause)
+            }
         }
     }
 
-    private func toneArm(_ unit: Side, d: CGFloat) -> some View {
-        let mirror: CGFloat = unit == .left ? -1 : 1
-        let pivot = CGPoint(x: mirror * -0.42 * d, y: 0.40 * d)
-        let elbow = CGPoint(x: mirror * -0.30 * d, y: 0.10 * d)
-        let tip = CGPoint(x: mirror * -0.13 * d, y: -0.26 * d)
-        let headCenter = CGPoint(x: mirror * -0.10 * d, y: -0.31 * d)
-        let armColor = unit == .left ? ink : orange
-
-        return ZStack {
+    private func toneArm(
+        pivot: CGPoint,
+        elbow: CGPoint,
+        tip: CGPoint,
+        head: CGPoint,
+        headAngle: Double,
+        color: Color
+    ) -> some View {
+        ZStack {
             Path { p in
                 p.move(to: pivot)
                 p.addLine(to: elbow)
                 p.addLine(to: tip)
             }
-            .stroke(ink, style: StrokeStyle(lineWidth: d * 0.045, lineCap: .round, lineJoin: .round))
+            .stroke(ink, style: StrokeStyle(lineWidth: 13, lineCap: .round, lineJoin: .round))
 
             Path { p in
                 p.move(to: pivot)
                 p.addLine(to: elbow)
                 p.addLine(to: tip)
             }
-            .stroke(.white, style: StrokeStyle(lineWidth: d * 0.02, lineCap: .round, lineJoin: .round))
+            .stroke(.white, style: StrokeStyle(lineWidth: 6, lineCap: .round, lineJoin: .round))
 
-            RoundedRectangle(cornerRadius: d * 0.02)
+            RoundedRectangle(cornerRadius: 5, style: .continuous)
                 .fill(.white)
                 .overlay {
-                    RoundedRectangle(cornerRadius: d * 0.02)
-                        .stroke(ink, lineWidth: 2.5)
+                    RoundedRectangle(cornerRadius: 5, style: .continuous)
+                        .stroke(ink, lineWidth: 3)
                 }
-                .frame(width: d * 0.09, height: d * 0.16)
-                .rotationEffect(.degrees(unit == .left ? 28 : -28))
-                .offset(x: headCenter.x, y: headCenter.y)
+                .overlay {
+                    Capsule()
+                        .fill(ink.opacity(0.85))
+                        .frame(width: 4, height: 18)
+                }
+                .frame(width: 26, height: 46)
+                .rotationEffect(.degrees(headAngle))
+                .position(head)
 
             ZStack {
                 Circle()
-                    .fill(armColor)
-                    .shadow(color: .black.opacity(0.25), radius: 3, x: 2, y: 3)
-                Circle()
-                    .stroke(.white, lineWidth: 3)
-                    .padding(4)
-                Circle()
-                    .stroke(ink, lineWidth: 3)
+                    .fill(color)
+                    .shadow(color: .black.opacity(0.18), radius: 3, x: 2, y: 3)
+                Circle().stroke(.white, lineWidth: 5).padding(6)
+                Circle().stroke(ink, lineWidth: 3)
             }
-            .frame(width: d * 0.27, height: d * 0.27)
-            .offset(x: pivot.x, y: pivot.y)
+            .frame(width: 80, height: 80)
+            .position(pivot)
         }
-        .frame(width: d * 1.5, height: d * 1.5)
-        .allowsHitTesting(false)
     }
 
     private var bottomPlate: some View {
-        HStack(spacing: 16) {
-            Spacer(minLength: 0)
-
+        ZStack {
             TrapezoidPanel(topInset: 0.045)
                 .fill(cream)
+                .shadow(color: .black.opacity(0.10), radius: 4, y: 3)
                 .overlay {
                     TrapezoidPanel(topInset: 0.045)
                         .stroke(ink, style: StrokeStyle(lineWidth: 4, lineJoin: .round))
                 }
-                .overlay {
-                    HStack(spacing: 0) {
-                        Circle()
-                            .fill(.white)
-                            .frame(width: 34, height: 34)
-                            .overlay { Circle().stroke(ink, lineWidth: 3) }
 
-                        RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            .fill(olive)
-                            .overlay { RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(ink, lineWidth: 2.5) }
-                            .frame(width: 32, height: 26)
-                            .padding(.leading, 44)
+            Circle()
+                .fill(.white)
+                .frame(width: 40, height: 40)
+                .overlay { Circle().stroke(ink, lineWidth: 3) }
+                .position(x: 265, y: 550)
 
-                        Spacer()
+            oliveSlot.position(x: 365, y: 550)
+            oliveSlot.position(x: 640, y: 550)
 
-                        RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            .fill(olive)
-                            .overlay { RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(ink, lineWidth: 2.5) }
-                            .frame(width: 32, height: 26)
-                            .padding(.trailing, 44)
+            ZStack {
+                Circle().fill(ink).frame(width: 40, height: 40)
+                Circle().stroke(.white, lineWidth: 6).frame(width: 22, height: 22)
+            }
+            .position(x: 740, y: 550)
 
-                        ZStack {
-                            Circle().fill(ink).frame(width: 34, height: 34)
-                            Circle().stroke(.white, lineWidth: 5).frame(width: 20, height: 20)
-                        }
-                    }
-                    .padding(.horizontal, 46)
-                    .padding(.vertical, 20)
-                }
-                .frame(maxWidth: .infinity)
-
-            dash(width: 44)
-                .frame(height: 12)
-
-            Spacer(minLength: 0)
+            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .fill(olive)
+                .frame(width: 50, height: 14)
+                .position(x: 905, y: 550)
         }
-        .padding(.horizontal, 26)
-        .padding(.bottom, 12)
+        .allowsHitTesting(false)
     }
 
-    private func circleControl(_ control: Control, fill: Color, @ViewBuilder content: () -> some View) -> some View {
+    private var oliveSlot: some View {
+        RoundedRectangle(cornerRadius: 7, style: .continuous)
+            .fill(olive)
+            .overlay {
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .stroke(ink, lineWidth: 2.5)
+            }
+            .frame(width: 36, height: 28)
+    }
+
+    private func circleControl(
+        _ control: Control,
+        fill: Color,
+        @ViewBuilder content: () -> some View
+    ) -> some View {
         Button {
             trigger(control)
         } label: {
             ZStack {
-                Circle().fill(fill).shadow(color: .black.opacity(0.30), radius: 3, x: 2, y: 3)
-                Circle().stroke(ink, lineWidth: 2).opacity(fill == orange ? 1 : 0)
-                content().foregroundStyle(.white)
+                Circle()
+                    .fill(fill)
+                    .shadow(color: .black.opacity(0.22), radius: 3, x: 2, y: 3)
+                Circle()
+                    .stroke(ink, lineWidth: 2.5)
+                content()
+                    .foregroundStyle(.white)
             }
-            .frame(width: 50, height: 50)
+            .frame(width: 52, height: 52)
             .scaleEffect(pressedControl == control ? 0.92 : 1)
         }
         .buttonStyle(.plain)
@@ -331,7 +343,9 @@ struct PhysicalPlayerView: View {
     private func trigger(_ control: Control) {
         pressedControl = control
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) {
-            withAnimation(.easeOut(duration: 0.12)) { pressedControl = nil }
+            withAnimation(.easeOut(duration: 0.12)) {
+                pressedControl = nil
+            }
         }
 
         switch control {
