@@ -4,173 +4,59 @@ import UIKit
 struct ContentView: View {
     @State private var isPlaying = false
     @State private var progress = 0.38
-    @State private var spin: Double = 0
+    @State private var isPressed = false
+    @State private var reelPhase: Double = 0
 
     var body: some View {
-        ZStack {
-            TapePalette.shell.ignoresSafeArea()
+        GeometryReader { proxy in
+            ZStack {
+                TapePalette.shell
+                    .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                header
-                playerSurface
-                controlRow
+                CassettePlayerView(
+                    isPlaying: isPlaying,
+                    progress: progress,
+                    reelPhase: reelPhase,
+                    isPressed: isPressed,
+                    onPrevious: {
+                        haptic(.impact(.light))
+                        withAnimation(.easeOut(duration: 0.25)) {
+                            progress = max(0, progress - 0.07)
+                        }
+                    },
+                    onPlayPause: {
+                        let next = !isPlaying
+                        haptic(next ? .impact(.medium) : .impact(.light))
+                        withAnimation(.easeInOut(duration: next ? 0.7 : 0.4)) {
+                            isPlaying = next
+                        }
+                        withAnimation(.linear(duration: 3.2).repeatForever(autoreverses: false)) {
+                            reelPhase += next ? 360 : 0
+                        }
+                    },
+                    onNext: {
+                        haptic(.impact(.light))
+                        withAnimation(.easeOut(duration: 0.25)) {
+                            progress = min(1, progress + 0.07)
+                        }
+                    },
+                    onSeek: { value in
+                        progress = min(1, max(0, value))
+                    },
+                    onSeekEnded: {
+                        haptic(.selection)
+                    }
+                )
+                .frame(
+                    width: min(proxy.size.height * 0.62, proxy.size.width * 0.31),
+                    height: min(proxy.size.height * 0.86, proxy.size.width * 0.50)
+                )
+                .animation(.easeOut(duration: 0.25), value: proxy.size)
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 10)
-            .padding(.bottom, 14)
         }
         .preferredColorScheme(.dark)
         .statusBarHidden(true)
-    }
-
-    private var header: some View {
-        HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 4) {
-                MonospacedLabel(text: "TAPE / 001", size: 11, tracking: 2.0, color: TapePalette.text)
-                MonospacedLabel(text: "LOCAL", size: 9, tracking: 2.2)
-            }
-
-            Spacer()
-
-            Circle()
-                .fill(TapePalette.accent)
-                .frame(width: 6, height: 6)
-                .shadow(color: TapePalette.accent.opacity(0.55), radius: 6)
-                .accessibilityLabel("Ready")
-        }
-        .padding(.horizontal, 4)
-        .padding(.vertical, 12)
-    }
-
-    private var playerSurface: some View {
-        VStack(spacing: 0) {
-            ReelAssemblyView(isPlaying: isPlaying, spin: spin)
-                .frame(maxWidth: .infinity)
-                .frame(height: 310)
-                .padding(.top, 14)
-
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(alignment: .bottom) {
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("Night Drive")
-                            .font(.system(size: 29, weight: .semibold, design: .rounded))
-                            .tracking(-0.8)
-                            .foregroundStyle(TapePalette.text)
-                        Text("Chromatics")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(TapePalette.muted)
-                    }
-
-                    Spacer()
-
-                    MonospacedLabel(text: "FLAC 24/96", size: 9, tracking: 1.5, color: TapePalette.accent)
-                }
-
-                progressControl
-            }
-            .padding(.horizontal, 18)
-            .padding(.bottom, 22)
-        }
-        .background(
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(TapePalette.surface)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .stroke(TapePalette.line, lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .shadow(color: .black.opacity(0.38), radius: 22, y: 16)
-    }
-
-    private var progressControl: some View {
-        GeometryReader { proxy in
-            let width = proxy.size.width
-
-            ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(Color.white.opacity(0.07))
-                    .frame(height: 3)
-
-                Capsule()
-                    .fill(TapePalette.accent)
-                    .frame(width: max(3, width * progress), height: 3)
-
-                Circle()
-                    .fill(TapePalette.text)
-                    .frame(width: 8, height: 8)
-                    .offset(x: max(0, width * progress - 4))
-                    .shadow(color: .black.opacity(0.4), radius: 4)
-            }
-            .contentShape(Rectangle())
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { value in
-                        progress = min(1, max(0, value.location.x / width))
-                    }
-                    .onEnded { _ in
-                        haptic(.selection)
-                    }
-            )
-        }
-        .frame(height: 20)
-        .overlay(alignment: .top) {
-            HStack {
-                MonospacedLabel(text: timeString(progress), size: 8, tracking: 1.2)
-                Spacer()
-                MonospacedLabel(text: "04:12", size: 8, tracking: 1.2)
-            }
-            .offset(y: 14)
-        }
-        .padding(.bottom, 12)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Playback position")
-        .accessibilityValue("\(Int(progress * 100)) percent")
-        .accessibilityAdjustableAction { direction in
-            switch direction {
-            case .increment: progress = min(1, progress + 0.05)
-            case .decrement: progress = max(0, progress - 0.05)
-            @unknown default: break
-            }
-        }
-    }
-
-    private var controlRow: some View {
-        HStack(spacing: 0) {
-            TransportButton(systemName: "backward.fill", size: 17) {
-                haptic(.impact(.light))
-            }
-
-            Spacer()
-
-            TransportButton(systemName: isPlaying ? "pause.fill" : "play.fill", size: 23, isPrimary: true) {
-                let next = !isPlaying
-                withAnimation(.easeOut(duration: next ? 0.75 : 0.45)) {
-                    isPlaying = next
-                }
-                withAnimation(.spring(response: 0.38, dampingFraction: 0.78)) {
-                    spin += next ? 72 : -18
-                }
-                haptic(next ? .impact(.medium) : .impact(.light))
-            }
-
-            Spacer()
-
-            TransportButton(systemName: "forward.fill", size: 17) {
-                haptic(.impact(.light))
-                withAnimation(.snappy(duration: 0.28)) {
-                    progress = min(1, progress + 0.04)
-                    spin += 30
-                }
-            }
-        }
-        .padding(.horizontal, 12)
-        .padding(.top, 18)
-    }
-
-    private func timeString(_ value: Double) -> String {
-        let totalSeconds = Int(value * 252)
-        return String(format: "%02d:%02d", totalSeconds / 60, totalSeconds % 60)
+        .persistentSystemOverlays(.hidden)
     }
 
     private func haptic(_ event: HapticEvent) {
@@ -192,10 +78,287 @@ struct ContentView: View {
     }
 }
 
-private struct TransportButton: View {
+private struct CassettePlayerView: View {
+    let isPlaying: Bool
+    let progress: Double
+    let reelPhase: Double
+    let isPressed: Bool
+    let onPrevious: () -> Void
+    let onPlayPause: () -> Void
+    let onNext: () -> Void
+    let onSeek: (Double) -> Void
+    let onSeekEnded: () -> Void
+
+    var body: some View {
+        GeometryReader { proxy in
+            let w = proxy.size.width
+            let h = proxy.size.height
+
+            ZStack {
+                RoundedRectangle(cornerRadius: w * 0.085, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                TapePalette.surface,
+                                TapePalette.inset,
+                                TapePalette.surface.opacity(0.96)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .overlay {
+                        RoundedRectangle(cornerRadius: w * 0.085, style: .continuous)
+                            .stroke(Color.white.opacity(0.085), lineWidth: 1)
+                    }
+                    .shadow(color: .black.opacity(0.48), radius: 30, y: 20)
+                    .scaleEffect(isPressed ? 0.985 : 1)
+
+                VStack(spacing: 0) {
+                    cassetteBrand
+                        .padding(.top, h * 0.055)
+
+                    Spacer(minLength: 8)
+
+                    reelWindow
+                        .frame(height: h * 0.42)
+
+                    Spacer(minLength: 10)
+
+                    trackInfo
+
+                    seekControl
+                        .padding(.top, h * 0.03)
+
+                    transport
+                        .padding(.top, h * 0.035)
+                        .padding(.bottom, h * 0.055)
+                }
+                .padding(.horizontal, w * 0.095)
+            }
+            .contentShape(Rectangle())
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    private var cassetteBrand: some View {
+        HStack(alignment: .center) {
+            Text("TAPE")
+                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .tracking(4.2)
+                .foregroundStyle(TapePalette.text.opacity(0.78))
+
+            Spacer()
+
+            Circle()
+                .fill(isPlaying ? TapePalette.accent : Color.white.opacity(0.12))
+                .frame(width: 5, height: 5)
+                .shadow(color: isPlaying ? TapePalette.accent.opacity(0.7) : .clear, radius: 7)
+        }
+    }
+
+    private var reelWindow: some View {
+        GeometryReader { proxy in
+            let size = min(proxy.size.width, proxy.size.height * 1.55)
+            let reel = min(proxy.size.height * 0.75, size * 0.36)
+
+            ZStack {
+                RoundedRectangle(cornerRadius: proxy.size.height * 0.08, style: .continuous)
+                    .fill(Color.black.opacity(0.18))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: proxy.size.height * 0.08, style: .continuous)
+                            .stroke(Color.white.opacity(0.065), lineWidth: 1)
+                    }
+
+                HStack(spacing: proxy.size.width * 0.06) {
+                    CassetteReel(size: reel, rotation: reelPhase * 0.94, isPlaying: isPlaying)
+                    TapePath()
+                    CassetteReel(size: reel, rotation: -reelPhase * 1.12, isPlaying: isPlaying)
+                }
+                .padding(.horizontal, proxy.size.width * 0.09)
+            }
+        }
+    }
+
+    private var trackInfo: some View {
+        VStack(spacing: 5) {
+            Text("Night Drive")
+                .font(.system(size: 20, weight: .semibold, design: .rounded))
+                .tracking(-0.35)
+                .foregroundStyle(TapePalette.text)
+                .lineLimit(1)
+
+            Text("CHROMATICS  ·  SIDE A")
+                .font(.system(size: 8.5, weight: .medium, design: .monospaced))
+                .tracking(1.5)
+                .foregroundStyle(TapePalette.muted)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var seekControl: some View {
+        GeometryReader { proxy in
+            let width = proxy.size.width
+
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(Color.white.opacity(0.075))
+                    .frame(height: 2)
+
+                Capsule()
+                    .fill(TapePalette.accent.opacity(0.9))
+                    .frame(width: max(3, width * progress), height: 2)
+
+                Circle()
+                    .fill(TapePalette.text.opacity(0.95))
+                    .frame(width: 6, height: 6)
+                    .offset(x: max(0, width * progress - 3))
+            }
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { value in
+                        onSeek(value.location.x / width)
+                    }
+                    .onEnded { _ in
+                        onSeekEnded()
+                    }
+            )
+        }
+        .frame(height: 14)
+        .overlay {
+            HStack {
+                Text(timeString(progress))
+                Spacer()
+                Text("04:12")
+            }
+            .font(.system(size: 7.5, weight: .medium, design: .monospaced))
+            .tracking(0.8)
+            .foregroundStyle(TapePalette.muted.opacity(0.9))
+            .offset(y: 13)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Playback position")
+        .accessibilityValue("\(Int(progress * 100)) percent")
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: onSeek(progress + 0.05)
+            case .decrement: onSeek(progress - 0.05)
+            @unknown default: break
+            }
+        }
+    }
+
+    private var transport: some View {
+        HStack(spacing: 0) {
+            CassetteButton(systemName: "backward.fill", size: 13, action: onPrevious)
+
+            Spacer()
+
+            CassetteButton(
+                systemName: isPlaying ? "pause.fill" : "play.fill",
+                size: 16,
+                primary: true,
+                action: onPlayPause
+            )
+
+            Spacer()
+
+            CassetteButton(systemName: "forward.fill", size: 13, action: onNext)
+        }
+    }
+
+    private func timeString(_ value: Double) -> String {
+        let totalSeconds = Int(value * 252)
+        return String(format: "%02d:%02d", totalSeconds / 60, totalSeconds % 60)
+    }
+}
+
+private struct CassetteReel: View {
+    let size: CGFloat
+    let rotation: Double
+    let isPlaying: Bool
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [
+                            Color.white.opacity(0.11),
+                            Color.white.opacity(0.035),
+                            Color.black.opacity(0.33)
+                        ],
+                        center: .center,
+                        startRadius: 1,
+                        endRadius: size * 0.72
+                    )
+                )
+                .overlay(Circle().stroke(Color.white.opacity(0.11), lineWidth: 1))
+
+            Circle()
+                .stroke(Color.black.opacity(0.36), lineWidth: size * 0.08)
+                .padding(size * 0.13)
+
+            ZStack {
+                ForEach(0..<5, id: \.self) { index in
+                    Capsule(style: .circular)
+                        .fill(Color.white.opacity(0.13))
+                        .frame(width: size * 0.045, height: size * 0.28)
+                        .offset(y: -size * 0.18)
+                        .rotationEffect(.degrees(Double(index) * 72))
+                }
+            }
+            .rotationEffect(.degrees(rotation))
+            .animation(
+                isPlaying
+                    ? .linear(duration: 2.6).repeatForever(autoreverses: false)
+                    : .easeOut(duration: 0.45),
+                value: isPlaying
+            )
+
+            Circle()
+                .fill(TapePalette.inset)
+                .frame(width: size * 0.27)
+                .overlay(Circle().stroke(Color.white.opacity(0.10), lineWidth: 1))
+
+            Circle()
+                .fill(TapePalette.accent.opacity(0.9))
+                .frame(width: size * 0.055)
+        }
+        .frame(width: size, height: size)
+        .shadow(color: .black.opacity(0.4), radius: size * 0.10, y: size * 0.06)
+    }
+}
+
+private struct TapePath: View {
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack {
+                Capsule()
+                    .fill(Color.white.opacity(0.065))
+                    .frame(width: proxy.size.width, height: 2)
+
+                Capsule()
+                    .fill(TapePalette.accent.opacity(0.18))
+                    .frame(width: proxy.size.width * 0.7, height: 1)
+
+                VStack(spacing: 3) {
+                    Circle().fill(Color.white.opacity(0.08)).frame(width: 4, height: 4)
+                    Circle().fill(Color.white.opacity(0.08)).frame(width: 4, height: 4)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+private struct CassetteButton: View {
     let systemName: String
     let size: CGFloat
-    var isPrimary = false
+    var primary = false
     let action: () -> Void
 
     @State private var pressed = false
@@ -204,25 +367,23 @@ private struct TransportButton: View {
         Button {
             pressed = true
             action()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.11) {
-                withAnimation(.easeOut(duration: 0.16)) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) {
+                withAnimation(.easeOut(duration: 0.14)) {
                     pressed = false
                 }
             }
         } label: {
             Image(systemName: systemName)
                 .font(.system(size: size, weight: .semibold))
-                .foregroundStyle(isPrimary ? TapePalette.shell : TapePalette.text)
-                .frame(width: isPrimary ? 62 : 46, height: isPrimary ? 62 : 46)
+                .foregroundStyle(primary ? TapePalette.shell : TapePalette.text.opacity(0.86))
+                .frame(width: primary ? 42 : 34, height: primary ? 42 : 34)
                 .background {
                     Circle()
-                        .fill(isPrimary ? TapePalette.accent : Color.white.opacity(0.055))
-                        .overlay {
-                            Circle().stroke(Color.white.opacity(isPrimary ? 0.10 : 0.07), lineWidth: 1)
-                        }
+                        .fill(primary ? TapePalette.accent : Color.white.opacity(0.06))
+                        .overlay(Circle().stroke(Color.white.opacity(0.08), lineWidth: 1))
                 }
-                .scaleEffect(pressed ? 0.92 : 1)
-                .offset(y: pressed ? 2 : 0)
+                .scaleEffect(pressed ? 0.91 : 1)
+                .offset(y: pressed ? 1.5 : 0)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(
@@ -235,4 +396,5 @@ private struct TransportButton: View {
 
 #Preview {
     ContentView()
+        .previewInterfaceOrientation(.landscapeLeft)
 }
