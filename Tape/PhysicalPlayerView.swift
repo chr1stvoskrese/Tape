@@ -1,101 +1,88 @@
 import SwiftUI
-import UIKit
 
 struct PhysicalPlayerView: View {
-    @State private var isPlaying = true
+    @State private var isPlaying = false
     @State private var volume: Double = 0.72
     @State private var selectedPreset = 0
     @State private var pressedControl: Control?
 
     var body: some View {
         GeometryReader { proxy in
-            let width = min(proxy.size.width * 0.96, proxy.size.height * 1.78)
-            let height = width / PlayerArtwork.aspectRatio
+            let imageAspect: CGFloat = 4.0 / 3.0
+            let availableAspect = proxy.size.width / max(proxy.size.height, 1)
+            let size: CGSize = availableAspect > imageAspect
+                ? CGSize(width: proxy.size.height * imageAspect, height: proxy.size.height)
+                : CGSize(width: proxy.size.width, height: proxy.size.width / imageAspect)
 
             ZStack {
-                Color(red: 0.962, green: 0.958, blue: 0.946)
-                    .ignoresSafeArea()
+                Color.white.ignoresSafeArea()
 
-                PlayerArtwork(
-                    isPlaying: isPlaying,
-                    leftReelSpeed: 32,
-                    rightReelSpeed: -46
-                )
-                .frame(width: width, height: height)
-                .overlay {
-                    controlsOverlay
-                }
+                Image("PlayerArtwork")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: size.width, height: size.height)
+                    .overlay {
+                        PlayerControlsOverlay(
+                            isPlaying: $isPlaying,
+                            volume: $volume,
+                            selectedPreset: $selectedPreset,
+                            pressedControl: $pressedControl
+                        )
+                    }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .preferredColorScheme(.light)
         .statusBarHidden(true)
     }
+}
 
-    private var controlsOverlay: some View {
+private struct PlayerControlsOverlay: View {
+    @Binding var isPlaying: Bool
+    @Binding var volume: Double
+    @Binding var selectedPreset: Int
+    @Binding var pressedControl: Control?
+
+    var body: some View {
         GeometryReader { proxy in
             ZStack {
-                control(.previous, symbol: "backward.end.fill")
-                    .position(x: proxy.size.width * 0.196, y: proxy.size.height * 0.805)
-                control(.rewind, symbol: "backward.fill")
-                    .position(x: proxy.size.width * 0.283, y: proxy.size.height * 0.805)
-                control(.playPause, symbol: isPlaying ? "pause.fill" : "play.fill", emphasis: true)
-                    .position(x: proxy.size.width * 0.500, y: proxy.size.height * 0.805)
-                control(.fastForward, symbol: "forward.fill")
-                    .position(x: proxy.size.width * 0.717, y: proxy.size.height * 0.805)
-                control(.next, symbol: "forward.end.fill")
-                    .position(x: proxy.size.width * 0.804, y: proxy.size.height * 0.805)
-
-                control(.volumeDown, symbol: "speaker.wave.1.fill", compact: true)
-                    .position(x: proxy.size.width * 0.105, y: proxy.size.height * 0.185)
-                control(.volumeUp, symbol: "speaker.wave.3.fill", compact: true)
-                    .position(x: proxy.size.width * 0.895, y: proxy.size.height * 0.185)
-                control(.eqPreset, symbol: "slider.horizontal.3", compact: true)
-                    .position(x: proxy.size.width * 0.105, y: proxy.size.height * 0.815)
-                control(.memoryLibrary, symbol: "rectangle.stack.fill", compact: true)
-                    .position(x: proxy.size.width * 0.895, y: proxy.size.height * 0.815)
-                control(.power, symbol: "power", compact: true, accent: true)
-                    .position(x: proxy.size.width * 0.500, y: proxy.size.height * 0.132)
+                hitTarget(.previous, at: point(270, 223, in: proxy.size))
+                hitTarget(.rewind, at: point(354, 223, in: proxy.size))
+                hitTarget(.fastForward, at: point(439, 223, in: proxy.size))
+                hitTarget(.volumeUp, at: point(825, 223, in: proxy.size))
+                hitTarget(.volumeDown, at: point(910, 223, in: proxy.size))
+                hitTarget(.eqPreset, at: point(995, 223, in: proxy.size))
+                hitTarget(.memoryLibrary, at: point(646, 220, in: proxy.size), size: CGSize(width: 180, height: 60))
+                hitTarget(.playPause, at: point(397, 754, in: proxy.size), size: CGSize(width: 72, height: 72))
+                hitTarget(.next, at: point(903, 754, in: proxy.size), size: CGSize(width: 72, height: 72))
+                hitTarget(.power, at: point(1121, 266, in: proxy.size), size: CGSize(width: 58, height: 170))
             }
         }
     }
 
-    private func control(
-        _ control: Control,
-        symbol: String,
-        emphasis: Bool = false,
-        compact: Bool = false,
-        accent: Bool = false
-    ) -> some View {
+    private func point(_ x: CGFloat, _ y: CGFloat, in size: CGSize) -> CGPoint {
+        CGPoint(x: size.width * x / 1280, y: size.height * y / 960)
+    }
+
+    private func hitTarget(_ control: Control, at point: CGPoint, size: CGSize = CGSize(width: 74, height: 74)) -> some View {
         Button {
             trigger(control)
         } label: {
-            Image(systemName: symbol)
-                .font(.system(size: compact ? 13 : (emphasis ? 20 : 15), weight: .semibold))
-                .foregroundStyle(accent ? Color(red: 0.90, green: 0.34, blue: 0.12) : Color.black.opacity(0.78))
-                .frame(width: compact ? 42 : (emphasis ? 72 : 56), height: compact ? 42 : (emphasis ? 64 : 56))
-                .background {
-                    Circle()
-                        .fill(Color.white.opacity(emphasis ? 0.76 : 0.001))
-                }
+            RoundedRectangle(cornerRadius: min(size.width, size.height) * 0.28, style: .continuous)
+                .fill(pressedControl == control ? Color.white.opacity(0.22) : .clear)
                 .overlay {
-                    Circle()
-                        .stroke(Color.black.opacity(emphasis ? 0.18 : 0.001), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: min(size.width, size.height) * 0.28, style: .continuous)
+                        .stroke(Color.black.opacity(pressedControl == control ? 0.12 : 0.001), lineWidth: 1)
                 }
-                .contentShape(Circle())
-                .scaleEffect(pressedControl == control ? 0.90 : 1)
+                .frame(width: size.width, height: size.height)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(control.accessibilityLabel)
-    }
-
-    private func togglePlayback() {
-        isPlaying.toggle()
-        Haptics.transport(isPlaying ? .play : .pause)
+        .position(point)
     }
 
     private func trigger(_ control: Control) {
-        withAnimation(.easeOut(duration: 0.12)) {
+        withAnimation(.easeOut(duration: 0.10)) {
             pressedControl = control
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
@@ -108,7 +95,8 @@ struct PhysicalPlayerView: View {
         case .previous, .rewind, .fastForward, .next:
             Haptics.transport(.skip)
         case .playPause:
-            togglePlayback()
+            isPlaying.toggle()
+            Haptics.transport(isPlaying ? .play : .pause)
         case .volumeDown:
             volume = max(0, volume - 0.08)
             Haptics.scrubTick()
@@ -125,165 +113,32 @@ struct PhysicalPlayerView: View {
             Haptics.transport(.pause)
         }
     }
-
-    private enum Control: Hashable {
-        case previous
-        case rewind
-        case playPause
-        case fastForward
-        case next
-        case volumeDown
-        case volumeUp
-        case eqPreset
-        case memoryLibrary
-        case power
-
-        var accessibilityLabel: String {
-            switch self {
-            case .previous: return "Previous"
-            case .rewind: return "Rewind"
-            case .playPause: return "Play or pause"
-            case .fastForward: return "Fast forward"
-            case .next: return "Next"
-            case .volumeDown: return "Volume down"
-            case .volumeUp: return "Volume up"
-            case .eqPreset: return "EQ or preset"
-            case .memoryLibrary: return "Memory or library"
-            case .power: return "Power"
-            }
-        }
-    }
 }
 
-private struct PlayerArtwork: View {
-    static let aspectRatio: CGFloat = 1.68
+private enum Control: Hashable {
+    case previous
+    case rewind
+    case playPause
+    case fastForward
+    case next
+    case volumeDown
+    case volumeUp
+    case eqPreset
+    case memoryLibrary
+    case power
 
-    let isPlaying: Bool
-    let leftReelSpeed: Double
-    let rightReelSpeed: Double
-
-    private let ink = Color(red: 0.095, green: 0.092, blue: 0.086)
-    private let accent = Color(red: 0.90, green: 0.34, blue: 0.12)
-
-    var body: some View {
-        GeometryReader { proxy in
-            let reelSize = proxy.size.height * 0.57
-
-            ZStack {
-                RoundedRectangle(cornerRadius: proxy.size.height * 0.072, style: .continuous)
-                    .fill(Color(red: 0.90, green: 0.885, blue: 0.85))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: proxy.size.height * 0.072, style: .continuous)
-                            .stroke(ink.opacity(0.72), lineWidth: 1.5)
-                    }
-
-                RoundedRectangle(cornerRadius: proxy.size.height * 0.058, style: .continuous)
-                    .stroke(Color.white.opacity(0.58), lineWidth: 1)
-                    .padding(proxy.size.height * 0.022)
-
-                HStack(spacing: proxy.size.width * 0.095) {
-                    ReelArtwork(ink: ink, accent: accent, speed: leftReelSpeed, isPlaying: isPlaying, phase: 0)
-                        .frame(width: reelSize, height: reelSize)
-                    ReelArtwork(ink: ink, accent: accent, speed: rightReelSpeed, isPlaying: isPlaying, phase: 62)
-                        .frame(width: reelSize, height: reelSize)
-                }
-                .position(x: proxy.size.width * 0.5, y: proxy.size.height * 0.48)
-
-                Capsule()
-                    .fill(ink.opacity(0.38))
-                    .frame(width: proxy.size.width * 0.15, height: 1)
-                    .position(x: proxy.size.width * 0.5, y: proxy.size.height * 0.48)
-
-                Circle()
-                    .fill(Color(red: 0.90, green: 0.885, blue: 0.85))
-                    .frame(width: proxy.size.height * 0.045, height: proxy.size.height * 0.045)
-                    .overlay(Circle().stroke(ink.opacity(0.48), lineWidth: 1))
-                    .overlay(Circle().fill(accent).frame(width: proxy.size.height * 0.012, height: proxy.size.height * 0.012))
-                    .position(x: proxy.size.width * 0.5, y: proxy.size.height * 0.48)
-
-                topDetails(size: proxy.size)
-                bottomRail(size: proxy.size)
-            }
-        }
-        .aspectRatio(Self.aspectRatio, contentMode: .fit)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Tape hi-fi cassette transport")
-    }
-
-    @ViewBuilder
-    private func topDetails(size: CGSize) -> some View {
-        HStack {
-            Text("TAPE")
-                .font(.system(size: size.height * 0.030, weight: .bold, design: .rounded))
-                .tracking(size.height * 0.010)
-            Spacer()
-            Capsule().fill(accent).frame(width: size.width * 0.065, height: 3)
-        }
-        .foregroundStyle(ink)
-        .frame(width: size.width * 0.76)
-        .position(x: size.width * 0.5, y: size.height * 0.10)
-    }
-
-    @ViewBuilder
-    private func bottomRail(size: CGSize) -> some View {
-        Capsule()
-            .fill(ink.opacity(0.14))
-            .frame(width: size.width * 0.64, height: 1)
-            .position(x: size.width * 0.5, y: size.height * 0.69)
-    }
-}
-
-private struct ReelArtwork: View {
-    let ink: Color
-    let accent: Color
-    let speed: Double
-    let isPlaying: Bool
-    let phase: Double
-
-    var body: some View {
-        TimelineView(.animation(paused: !isPlaying)) { context in
-            let time = context.date.timeIntervalSinceReferenceDate
-            let angle = isPlaying ? (time * speed + phase).truncatingRemainder(dividingBy: 360) : phase
-
-            ZStack {
-                Circle()
-                    .fill(Color.white.opacity(0.38))
-                    .overlay(Circle().stroke(ink.opacity(0.16), lineWidth: 1))
-
-                Circle()
-                    .stroke(ink.opacity(0.23), lineWidth: 1.4)
-                    .padding(7)
-
-                Circle()
-                    .stroke(ink.opacity(0.10), lineWidth: 1)
-                    .padding(20)
-
-                ForEach(0..<6, id: \.self) { index in
-                    RoundedRectangle(cornerRadius: 2, style: .continuous)
-                        .fill(ink.opacity(0.64))
-                        .frame(width: 7, height: 66)
-                        .offset(y: -58)
-                        .rotationEffect(.degrees(Double(index) * 60))
-                }
-
-                Circle()
-                    .fill(ink.opacity(0.045))
-                    .frame(width: 112, height: 112)
-                    .overlay(Circle().stroke(ink.opacity(0.30), lineWidth: 1.2))
-
-                Circle()
-                    .fill(ink)
-                    .frame(width: 31, height: 31)
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: 9, height: 9)
-
-                Capsule()
-                    .fill(accent.opacity(0.62))
-                    .frame(width: 2, height: 32)
-                    .offset(y: -94)
-            }
-            .rotationEffect(.degrees(angle))
+    var accessibilityLabel: String {
+        switch self {
+        case .previous: return "Previous"
+        case .rewind: return "Rewind"
+        case .playPause: return "Play or pause"
+        case .fastForward: return "Fast forward"
+        case .next: return "Next"
+        case .volumeDown: return "Volume down"
+        case .volumeUp: return "Volume up"
+        case .eqPreset: return "EQ or preset"
+        case .memoryLibrary: return "Memory or library"
+        case .power: return "Power"
         }
     }
 }
