@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct ReelView: View {
     let isPlaying: Bool
