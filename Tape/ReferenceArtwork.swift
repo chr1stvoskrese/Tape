@@ -111,47 +111,29 @@ enum ReferenceArtwork {
             height: (radius - 2) * 2
         ))
 
-        let spokeOffsets: [CGPoint] = [
-            CGPoint(x: 0, y: -0.45),
-            CGPoint(x: 0.428, y: -0.139),
-            CGPoint(x: 0.265, y: 0.364),
-            CGPoint(x: -0.265, y: 0.364),
-            CGPoint(x: -0.428, y: -0.139)
+        let spokes: [(offset: CGPoint, angle: CGFloat)] = [
+            (CGPoint(x: 0, y: -0.45), 0),
+            (CGPoint(x: 0.428, y: -0.139), .pi * 0.4),
+            (CGPoint(x: 0.265, y: 0.364), .pi * 0.8),
+            (CGPoint(x: -0.265, y: 0.364), .pi * 1.2),
+            (CGPoint(x: -0.428, y: -0.139), .pi * 1.6)
         ]
 
         UIColor(white: 1, alpha: 0.10).setFill()
-        for offset in spokeOffsets {
+        for spoke in spokes {
             let spokeCenter = CGPoint(
-                x: center.x + offset.x * radius,
-                y: center.y + offset.y * radius
+                x: center.x + spoke.offset.x * radius,
+                y: center.y + spoke.offset.y * radius
             )
-            let spokeRect = CGRect(
-                x: spokeCenter.x - 4,
-                y: spokeCenter.y - radius * 0.12,
-                width: 8,
-                height: radius * 0.24
-            )
+
             context.saveGState()
             context.translateBy(x: spokeCenter.x, y: spokeCenter.y)
-            let angle: CGFloat
-            switch offset {
-            case CGPoint(x: 0, y: -0.45):
-                angle = 0
-            case CGPoint(x: 0.428, y: -0.139):
-                angle = .pi * 0.4
-            case CGPoint(x: 0.265, y: 0.364):
-                angle = .pi * 0.8
-            case CGPoint(x: -0.265, y: 0.364):
-                angle = .pi * 1.2
-            default:
-                angle = .pi * 1.6
-            }
-            context.rotate(by: angle)
+            context.rotate(by: spoke.angle)
             context.fill(CGRect(
-                x: -spokeRect.width / 2,
-                y: -spokeRect.height / 2,
-                width: spokeRect.width,
-                height: spokeRect.height
+                x: -4,
+                y: -radius * 0.12,
+                width: 8,
+                height: radius * 0.24
             ))
             context.restoreGState()
         }
