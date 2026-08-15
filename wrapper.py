@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Copy the complete Tape source tree into the macOS clipboard."""
+"""Build an AI prompt from the complete Tape source tree and copy it to macOS clipboard."""
 
 from __future__ import annotations
 
@@ -22,7 +22,6 @@ IOS_PROMPT = r'''Ты — senior iOS-разработчик и code reviewer с 
 Не придумывай отсутствующие файлы или API. Проверяй взаимосвязи между файлами и предлагай конкретные исправления с готовым кодом.
 '''
 
-# Source/code files that are useful to an iOS engineer reviewing the whole app.
 CODE_EXTENSIONS = {
     ".swift",
     ".m",
@@ -103,9 +102,16 @@ def read_text(path: Path) -> str:
     return "[SKIPPED: not valid UTF-8 text]\n"
 
 
-def build_payload(root: Path) -> str:
+def build_payload(root: Path, user_prompt: str) -> str:
     files = collect_files(root)
-    parts: list[str] = [IOS_PROMPT.rstrip(), "", "# PROJECT: Tape", f"# ROOT: {root}", f"# FILES: {len(files)}", ""]
+    parts: list[str] = [
+        IOS_PROMPT.rstrip(),
+        "",
+        "# PROJECT: Tape",
+        f"# ROOT: {root}",
+        f"# FILES: {len(files)}",
+        "",
+    ]
 
     for path in files:
         relative = path.relative_to(root).as_posix()
@@ -119,7 +125,34 @@ def build_payload(root: Path) -> str:
             ]
         )
 
+    parts.extend(
+        [
+            "=" * 80,
+            "USER PROMPT",
+            "=" * 80,
+            user_prompt.strip(),
+            "",
+        ]
+    )
+
     return "\n".join(parts).rstrip() + "\n"
+
+
+def read_user_prompt() -> str:
+    print("Введите свой промпт для нейросети.")
+    print("Можно писать в несколько строк. Завершите ввод Ctrl-D (macOS).")
+    print()
+
+    try:
+        lines = sys.stdin.readlines()
+    except KeyboardInterrupt:
+        print("\nОтменено.")
+        raise SystemExit(130)
+
+    prompt = "".join(lines).strip()
+    if not prompt:
+        raise RuntimeError("Пользовательский промпт пустой.")
+    return prompt
 
 
 def copy_to_clipboard(text: str) -> None:
@@ -136,9 +169,10 @@ def copy_to_clipboard(text: str) -> None:
 
 def main() -> int:
     root = Path(__file__).resolve().parent
-    payload = build_payload(root)
 
     try:
+        user_prompt = read_user_prompt()
+        payload = build_payload(root, user_prompt)
         copy_to_clipboard(payload)
     except FileNotFoundError:
         print("Ошибка: команда pbcopy не найдена. Проверь, что wrapper.py запускается на macOS.", file=sys.stderr)
@@ -150,9 +184,9 @@ def main() -> int:
         print(f"Ошибка: {exc}", file=sys.stderr)
         return 1
 
-    file_count = payload.count("\nFILE: ")
-    print(f"Скопировано в буфер обмена: {file_count} файлов.")
-    print("В начале буфера добавлен prompt для senior iOS-разработчика.")
+    file_count = len(collect_files(root))
+    print(f"Скопировано в буфер обмена: {file_count} файлов + пользовательский prompt.")
+    print("Структура: iOS prompt → весь код проекта → твой prompt в самом конце.")
     return 0
 
 
