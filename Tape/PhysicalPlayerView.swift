@@ -199,7 +199,9 @@ struct PhysicalPlayerView: View {
                 Circle()
                     .fill(hubRing)
                     .frame(width: 112, height: 112)
-                    .overlay { Circle().stroke(ink, lineWidth: 2) }
+                    .overlay {
+                        Circle().stroke(ink, lineWidth: 2)
+                    }
 
                 Circle()
                     .fill(.white)
@@ -283,6 +285,8 @@ struct PhysicalPlayerView: View {
                     TrapezoidPanel(topInset: 0.045)
                         .stroke(ink, style: StrokeStyle(lineWidth: 4, lineJoin: .round))
                 }
+                .frame(width: 675, height: 145)
+                .position(x: 507, y: 522)
 
             Circle()
                 .fill(.white)
@@ -290,8 +294,11 @@ struct PhysicalPlayerView: View {
                 .overlay { Circle().stroke(ink, lineWidth: 3) }
                 .position(x: 265, y: 550)
 
-            oliveSlot.position(x: 365, y: 550)
-            oliveSlot.position(x: 640, y: 550)
+            oliveSlot
+                .position(x: 365, y: 550)
+
+            oliveSlot
+                .position(x: 640, y: 550)
 
             ZStack {
                 Circle().fill(ink).frame(width: 40, height: 40)
@@ -368,19 +375,17 @@ struct PhysicalPlayerView: View {
         case volumeUp, volumeDown
         case eq
     }
-
-    private enum Side {
-        case left, right
-    }
 }
 
 struct TrapezoidPanel: Shape {
     var topInset: CGFloat
 
     func path(in rect: CGRect) -> Path {
+        let inset = rect.width * topInset
+
         var p = Path()
-        p.move(to: CGPoint(x: rect.minX + rect.width * topInset, y: rect.minY))
-        p.addLine(to: CGPoint(x: rect.maxX - rect.width * topInset, y: rect.minY))
+        p.move(to: CGPoint(x: rect.minX + inset, y: rect.minY))
+        p.addLine(to: CGPoint(x: rect.maxX - inset, y: rect.minY))
         p.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
         p.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
         p.closeSubpath()
